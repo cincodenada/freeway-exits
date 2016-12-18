@@ -35,38 +35,62 @@ class HwySeg:
             return None
 
 class Hwy:
-    def __init__(self, starts, pool):
-        self.starts = starts
-        self.pool = pool
-        self.add_segs()
+    def __init__(self, name, start_idx, end_idx, pool):
+        self.name = name
+        self.start_idx = start_idx
+        self.end_idx = end_idx
 
-    def add_segs(self):
-        print(self.starts)
-        for (start, id) in self.starts.items():
-            self.add_seg(self.pool[id])
+        self.starts = []
+        self.ends = []
+        self.pool = pool
 
     def add_seg(self, seg):
-        if(seg.end in self.starts):
-            nextid = self.starts[seg.end]
+        previd = nextid = None
+        if(seg.end in self.start_idx):
+            nextid = self.start_idx[seg.end]
             seg.next = self.pool[nextid]
-            self.pool[nextid].prev = seg
+        if(seg.start in self.end_idx):
+            previd = self.end_idx[seg.start]
+            seg.prev = self.pool[previd]
+
+        if(previd and not nextid):
+            self.ends.append(seg)
+        elif(nextid and not previd):
+            self.starts.append(seg)
 
 # Get ways
 nodes_to_hwy = {}
+hwys = {}
 hwy_segs = {}
+hwy_names = set()
 hwy_start = {}
+hwy_end = {}
 links = {}
 for way in root.iter('way'):
     seg = HwySeg(way)
 
     if(seg.type == 'motorway'):
         hwy_segs[seg.id] = seg
+
+        hwy_names.add(seg.name)
         if(seg.name not in hwy_start):
             hwy_start[seg.name] = {}
+        if(seg.name not in hwy_end):
+            hwy_end[seg.name] = {}
 
         hwy_start[seg.name][seg.start] = seg.id
+        hwy_start[seg.name][seg.end] = seg.id
     elif(seg.type == 'motorway_link'):
         links[seg.id] = seg
 
-for (name, starts) in hwy_start.items():
-    hwy = Hwy(starts, hwy_segs)
+
+for name in hwy_names:
+    hwys[name] = Hwy(name, hwy_start[name], hwy_end[name], hwy_segs)
+
+for (id, seg) in hwy_segs.items():
+    hwys[seg.name].add_seg(seg)
+
+for (name, hwy) in hwys.items():
+    print(name)
+    print(hwy.starts)
+    print(hwy.ends)
