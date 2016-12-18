@@ -3,22 +3,10 @@ import xml.etree.ElementTree as ET
 tree = ET.parse('motorway.osm')
 root = tree.getroot()
 
-class OsmEl(ET.Element):
-    def get_tag(self, k):
-        subel = self.find("./tag[@k='{}']".format(k))
-        if(subel):
-            return subel.attrib.get('v')
-        else:
-            return None
-#   if(hasattr(name, 'get')):
-#       print(name.get('v'))
-#   elif(hasattr(name, 'attrib')):
-#       print(name.attrib.get('v'))
-
 class HwySeg:
     lane_keys = ['turn','hov','bus']
     def __init__(self, el):
-        self.el = OsmEl(el)
+        self.el = el
 
         self.id = self.el.attrib.get('id')
 
@@ -26,14 +14,25 @@ class HwySeg:
         self.start = self.nodes[0]
         self.end = self.nodes[-1]
 
-        self.name = self.el.get_tag('ref')
-        self.type = self.el.get_tag('highway')
+        self.name = self.get_tag('ref')
+        self.type = self.get_tag('highway')
 
-        self.lanes = self.el.get_tag('lanes')
+        self.lanes = self.get_tag('lanes')
         self.lanedata = {}
         for key in self.lane_keys:
-            lanedata = self.el.get_tag(key + ':lanes')
+            lanedata = self.get_tag(key + ':lanes')
             self.lanedata[key] = lanedata.split('|') if lanedata else None
+
+    def get_tag(self, k):
+        tagel = self.el.find("./tag[@k='{}']".format(k))
+        # I'm not sure why this is necessary?
+        # Maybe it's not?
+        if(hasattr(tagel, 'get')):
+            return tagel.get('v')
+        elif(hasattr(tagel, 'attrib')):
+            return tagel.attrib.get('v')
+        else:
+            return None
 
 # Get ways
 hwy_ways = {}
@@ -43,6 +42,7 @@ for way in root.iter('way'):
     hwy = HwySeg(way)
 
     print(hwy.id)
+    print(hwy.type)
 
     if(hwy.type == 'motorway'):
         hwy_ways[hwy.start] = hwy
