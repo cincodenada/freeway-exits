@@ -4,11 +4,11 @@ tree = ET.parse('motorway.osm')
 root = tree.getroot()
 
 class HwySeg:
-    lane_keys = ['turn','hov','bus']
+    lane_keys = ['turn','hov','hgv','bus','motor_vehicle','motorcycle']
     def __init__(self, el):
         self.el = el
 
-        self.id = self.el.attrib.get('id')
+        self.id = int(self.el.attrib.get('id'))
 
         self.nodes = [int(sel.attrib.get('ref')) for sel in el.findall('nd')]
         self.start = self.nodes[0]
@@ -34,18 +34,39 @@ class HwySeg:
         else:
             return None
 
+class Hwy:
+    def __init__(self, starts, pool):
+        self.starts = starts
+        self.pool = pool
+        self.add_segs()
+
+    def add_segs(self):
+        print(self.starts)
+        for (start, id) in self.starts.items():
+            self.add_seg(self.pool[id])
+
+    def add_seg(self, seg):
+        if(seg.end in self.starts):
+            nextid = self.starts[seg.end]
+            seg.next = self.pool[nextid]
+            self.pool[nextid].prev = seg
+
 # Get ways
-hwy_ways = {}
-links_start = {}
-links_end = {}
+nodes_to_hwy = {}
+hwy_segs = {}
+hwy_start = {}
+links = {}
 for way in root.iter('way'):
-    hwy = HwySeg(way)
+    seg = HwySeg(way)
 
-    print(hwy.id)
-    print(hwy.type)
+    if(seg.type == 'motorway'):
+        hwy_segs[seg.id] = seg
+        if(seg.name not in hwy_start):
+            hwy_start[seg.name] = {}
 
-    if(hwy.type == 'motorway'):
-        hwy_ways[hwy.start] = hwy
-    elif(hwy.type == 'motorway_link'):
-        links_start[hwy.start] = hwy
-        links_end[hwy.end] = hwy
+        hwy_start[seg.name][seg.start] = seg.id
+    elif(seg.type == 'motorway_link'):
+        links[seg.id] = seg
+
+for (name, starts) in hwy_start.items():
+    hwy = Hwy(starts, hwy_segs)
