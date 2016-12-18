@@ -16,6 +16,7 @@ class OsmEl(ET.Element):
 #       print(name.attrib.get('v'))
 
 class HwySeg:
+    lane_keys = ['turn','hov','bus']
     def __init__(self, el):
         self.el = OsmEl(el)
 
@@ -30,9 +31,9 @@ class HwySeg:
 
         self.lanes = self.el.get_tag('lanes')
         self.lanedata = {}
-        for lanetype in self.el.findall("./tag[substring-after(@k, ':')='lanes']"):
-            k = lanetype.attrib('k').split(':')
-            self.lanedata[k[-1]] = lanetype.attrib('v').split('|')
+        for key in self.lane_keys:
+            lanedata = self.el.get_tag(key + ':lanes')
+            self.lanedata[key] = lanedata.split('|') if lanedata else None
 
 # Get ways
 hwy_ways = {}
