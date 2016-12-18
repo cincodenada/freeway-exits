@@ -79,7 +79,7 @@ for way in root.iter('way'):
             hwy_end[seg.name] = {}
 
         hwy_start[seg.name][seg.start] = seg.id
-        hwy_start[seg.name][seg.end] = seg.id
+        hwy_end[seg.name][seg.end] = seg.id
     elif(seg.type == 'motorway_link'):
         links[seg.id] = seg
 
