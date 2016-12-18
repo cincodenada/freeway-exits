@@ -17,11 +17,17 @@ class HwySeg:
         self.name = self.get_tag('ref')
         self.type = self.get_tag('highway')
 
-        self.lanes = self.get_tag('lanes')
+        try:
+            self.lanes = int(self.get_tag('lanes'))
+        except (TypeError, ValueError):
+            self.lanes = 0
         self.lanedata = {}
         for key in self.lane_keys:
             lanedata = self.get_tag(key + ':lanes')
             self.lanedata[key] = lanedata.split('|') if lanedata else None
+
+        self.prev = None
+        self.next = None
 
     def get_tag(self, k):
         tagel = self.el.find("./tag[@k='{}']".format(k))
@@ -90,7 +96,13 @@ for name in hwy_names:
 for (id, seg) in hwy_segs.items():
     hwys[seg.name].add_seg(seg)
 
-for (name, hwy) in hwys.items():
-    print(name)
-    print(hwy.starts)
-    print(hwy.ends)
+for start in hwys['I 5'].starts:
+    curseg = start
+    curlanes = start.lanes
+    while curseg.next:
+        if(curlanes != curseg.lanes):
+            print('H'*curlanes)
+            curlanes = curseg.lanes
+        curseg = curseg.next
+    print('H'*curlanes)
+    print("---")
