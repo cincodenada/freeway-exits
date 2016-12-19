@@ -64,6 +64,20 @@ class Hwy:
         elif(nextid and not previd):
             self.starts.append(seg)
 
+class HwySet:
+    def __init__(self, segs):
+        self.hwys = {}
+        self.segs = segs
+
+    def add_hwy(self, name, starts, ends):
+        self.hwys[name] = Hwy(name, starts, ends, self.segs)
+
+    def add_seg(self, seg):
+        self.hwys[seg.name].add_seg(seg)
+
+    def get_hwy(self, name):
+        return self.hwys[name]
+
 # Get ways
 nodes_to_hwy = {}
 hwys = {}
@@ -90,13 +104,14 @@ for way in root.iter('way'):
         links[seg.id] = seg
 
 
+hwys = HwySet(hwy_segs)
 for name in hwy_names:
-    hwys[name] = Hwy(name, hwy_start[name], hwy_end[name], hwy_segs)
+    hwys.add_hwy(name, hwy_start[name], hwy_end[name])
 
 for (id, seg) in hwy_segs.items():
-    hwys[seg.name].add_seg(seg)
+    hwys.add_seg(seg)
 
-for start in hwys['I 5'].starts:
+for start in hwys.get_hwy('I 5').starts:
     curseg = start
     curlanes = start.lanes
     while curseg.next:
