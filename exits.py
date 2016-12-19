@@ -16,6 +16,7 @@ class HwySeg:
 
         self.name = self.get_tag('ref')
         self.type = self.get_tag('highway')
+        self.dest = self.get_tag('destination')
 
         try:
             self.lanes = int(self.get_tag('lanes'))
@@ -28,6 +29,8 @@ class HwySeg:
 
         self.prev = None
         self.next = None
+        self.exits = []
+        self.entrances = []
 
     def get_tag(self, k):
         tagel = self.el.find("./tag[@k='{}']".format(k))
@@ -64,6 +67,12 @@ class Hwy:
         elif(nextid and not previd):
             self.starts.append(seg)
 
+    def add_link(self, link):
+        if(link.start in self.end_idx):
+            self.pool[self.end_idx[link.start]].exits.append(link)
+        if(link.end in self.end_idx):
+            self.pool[self.end_idx[link.end]].entrances.append(link)
+
 class HwySet:
     def __init__(self, segs):
         self.hwys = {}
@@ -74,6 +83,10 @@ class HwySet:
 
     def add_seg(self, seg):
         self.hwys[seg.name].add_seg(seg)
+
+    def add_link(self, link):
+        for (name, hwy) in self.hwys.items():
+            hwy.add_link(link)
 
     def get_hwy(self, name):
         return self.hwys[name]
@@ -111,12 +124,20 @@ for name in hwy_names:
 for (id, seg) in hwy_segs.items():
     hwys.add_seg(seg)
 
+for (id, link) in links.items():
+    hwys.add_link(link)
+
 for start in hwys.get_hwy('I 5').starts:
     curseg = start
     curlanes = start.lanes
     while curseg.next:
-        if(curlanes != curseg.lanes):
-            print('H'*curlanes)
+        if(curlanes != curseg.lanes or len(curseg.exits) or len(curseg.entrances)):
+            lanes = 'H'*curlanes
+            if(len(curseg.exits)):
+                lanes += '-> ' + ';'.join([s.dest if s.dest else '???' for s in curseg.exits])
+            if(len(curseg.entrances)):
+                lanes += '<- ???'
+            print(lanes)
             curlanes = curseg.lanes
         curseg = curseg.next
     print('H'*curlanes)
