@@ -46,8 +46,8 @@ class HwySeg:
 
     def get_ang(self, node_pool, rev=False):
         if(len(self.nodes) >= 2):
-            p = [node_pool[n] for n in (self.nodes[-2:] if rev else self.nodes[:2])]
-            return math.atan((p[1][1] - p[0][1])/(p[1][0]-p[0][0]))
+            p = [node_pool[n] for n in (self.nodes[-2:][::-1] if rev else self.nodes[:2])]
+            return math.atan2(p[1][0] - p[0][0], p[1][1] - p[0][1])
         else:
             return None
 
@@ -109,7 +109,7 @@ hwy_end = {}
 links = {}
 
 print("Getting nodes...")
-nodecoords = {int(n.get('id')): (float(n.get('lon')), float(n.get('lat'))) for n in root.iter('node')}
+nodecoords = {int(n.get('id')): (float(n.get('lat')), float(n.get('lon'))) for n in root.iter('node')}
 
 print("Getting ways...")
 for way in root.iter('way'):
@@ -131,7 +131,10 @@ for way in root.iter('way'):
 
 print("Analyzing...")
 
-print(links[4755209].get_ang(nodecoords, True))
+print(links[452336723].get_ang(nodecoords, True))
+print(hwy_segs[4748960].get_ang(nodecoords, False))
+print(links[436165683].get_ang(nodecoords, False))
+sys.exit()
 hwys = HwySet(hwy_segs)
 for name in hwy_names:
     hwys.add_hwy(name, hwy_start[name], hwy_end[name])
