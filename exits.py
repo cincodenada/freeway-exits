@@ -44,12 +44,38 @@ class HwySeg:
         else:
             return None
 
-    def get_ang(self, node_pool, rev=False):
+    def get_ang(self, node_pool, rev=False, start_node = None):
+        # Set default start_node depending on rev
+        if(start_node is None):
+            start_node = len(self.nodes)-1 if rev else 0
+
         if(len(self.nodes) >= 2):
-            p = [node_pool[n] for n in (self.nodes[-2:][::-1] if rev else self.nodes[:2])]
+            p = [node_pool[n] for n in (self.nodes[start_node:start_node-2:-1] if rev else self.nodes[start_node:start_node+2])]
             return math.atan2(p[1][0] - p[0][0], p[1][1] - p[0][1])
         else:
             return None
+
+    def get_rel_ang(self, node_pool, link):
+        if(link.start in self.nodes):
+            # Exit
+            start_node = self.nodes.index(link.start)
+            diff = link.get_ang(node_pool, False) - self.get_ang(node_pool, False, start_node)
+        elif(link.end in self.nodes):
+            start_node = self.nodes.index(link.end)
+            diff = link.get_ang(node_pool, True) - self.get_ang(node_pool, True, start_node)
+        else:
+            return None
+
+        if(abs(diff) == 180):
+            raise ValueError("Exit 180 degrees from road!")
+
+        if(abs(diff) > 180):
+            diff -= math.copysign(360,diff)
+
+        return diff
+
+    def get_side(self, node_pool, link):
+        return 'L' if self.get_rel_ang(node_pool, link) > 0 else 'R'
 
 class Hwy:
     def __init__(self, name, start_idx, end_idx, pool):
@@ -134,6 +160,16 @@ print("Analyzing...")
 print(links[452336723].get_ang(nodecoords, True))
 print(hwy_segs[4748960].get_ang(nodecoords, False))
 print(links[436165683].get_ang(nodecoords, False))
+
+# L
+print(hwy_segs[452336740].get_side(nodecoords, links[452336723]))
+# R
+print(hwy_segs[4748960].get_side(nodecoords, links[436165683]))
+# R
+print(hwy_segs[428232211].get_side(nodecoords, links[96260970]))
+# L
+print(hwy_segs[14017470].get_side(nodecoords, links[85106512]))
+
 sys.exit()
 hwys = HwySet(hwy_segs)
 for name in hwy_names:
