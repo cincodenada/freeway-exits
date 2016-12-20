@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import math
 
 tree = ET.parse('motorway.osm')
 root = tree.getroot()
@@ -40,6 +41,13 @@ class HwySeg:
             return tagel.get('v')
         elif(hasattr(tagel, 'attrib')):
             return tagel.attrib.get('v')
+        else:
+            return None
+
+    def get_ang(self, node_pool, rev=False):
+        if(len(self.nodes) >= 2):
+            p = [node_pool[n] for n in (self.nodes[-2:] if rev else self.nodes[:2])]
+            return math.atan((p[1][1] - p[0][1])/(p[1][0]-p[0][0]))
         else:
             return None
 
@@ -99,6 +107,11 @@ hwy_names = set()
 hwy_start = {}
 hwy_end = {}
 links = {}
+
+print("Getting nodes...")
+nodecoords = {int(n.get('id')): (float(n.get('lon')), float(n.get('lat'))) for n in root.iter('node')}
+
+print("Getting ways...")
 for way in root.iter('way'):
     seg = HwySeg(way)
 
@@ -116,7 +129,9 @@ for way in root.iter('way'):
     elif(seg.type == 'motorway_link'):
         links[seg.id] = seg
 
+print("Analyzing...")
 
+print(links[4755209].get_ang(nodecoords, True))
 hwys = HwySet(hwy_segs)
 for name in hwy_names:
     hwys.add_hwy(name, hwy_start[name], hwy_end[name])
