@@ -56,11 +56,12 @@ class HwySeg:
             return None
 
     def get_rel_ang(self, node_pool, link):
-        if(link.start in self.nodes):
+        if((link.start in self.nodes) and (link.start != self.end)):
             # Exit
             start_node = self.nodes.index(link.start)
             diff = link.get_ang(node_pool, False) - self.get_ang(node_pool, False, start_node)
-        elif(link.end in self.nodes):
+        elif((link.end in self.nodes) and (link.end != self.start)):
+            # Entrance
             start_node = self.nodes.index(link.end)
             diff = link.get_ang(node_pool, True) - self.get_ang(node_pool, True, start_node)
         else:
@@ -75,7 +76,11 @@ class HwySeg:
         return diff
 
     def get_side(self, node_pool, link):
-        return 'L' if self.get_rel_ang(node_pool, link) > 0 else 'R'
+        rel_ang = self.get_rel_ang(node_pool, link)
+        if(rel_ang is None):
+            return None
+        else:
+            return 'L' if rel_ang > 0 else 'R'
 
 class Hwy:
     def __init__(self, name, start_idx, end_idx, pool):
@@ -169,6 +174,8 @@ print(hwy_segs[4748960].get_side(nodecoords, links[436165683]))
 print(hwy_segs[428232211].get_side(nodecoords, links[96260970]))
 # L
 print(hwy_segs[14017470].get_side(nodecoords, links[85106512]))
+# Breaks, not correct seg
+print(hwy_segs[5130429].get_side(nodecoords, links[85106512]))
 
 sys.exit()
 hwys = HwySet(hwy_segs)
