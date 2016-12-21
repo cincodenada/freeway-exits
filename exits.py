@@ -44,7 +44,8 @@ class HwySeg:
         else:
             return None
 
-    def get_ang(self, node_pool, rev=False, start_node = None):
+    def get_ang(self, node_pool, link_type, start_node = None):
+        rev = (link_type == 'entrance')
         # Set default start_node depending on rev
         if(start_node is None):
             start_node = len(self.nodes)-1 if rev else 0
@@ -55,17 +56,22 @@ class HwySeg:
         else:
             return None
 
-    def get_rel_ang(self, node_pool, link):
+    def get_link_type(self, link):
         if((link.start in self.nodes) and (link.start != self.end)):
-            # Exit
-            start_node = self.nodes.index(link.start)
-            diff = link.get_ang(node_pool, False) - self.get_ang(node_pool, False, start_node)
+            return 'exit'
         elif((link.end in self.nodes) and (link.end != self.start)):
-            # Entrance
-            start_node = self.nodes.index(link.end)
-            diff = link.get_ang(node_pool, True) - self.get_ang(node_pool, True, start_node)
+            return 'entrance'
         else:
             return None
+
+    def get_rel_ang(self, node_pool, link):
+        link_type = self.get_link_type(link)
+        if(link_type is None):
+            return None
+
+        center_id = link.start if link_type == 'exit' else link.end
+        start_node = self.nodes.index(center_id)
+        diff = link.get_ang(node_pool, link_type) - self.get_ang(node_pool, link_type, start_node)
 
         if(abs(diff) == 180):
             raise ValueError("Exit 180 degrees from road!")
@@ -76,11 +82,16 @@ class HwySeg:
         return diff
 
     def get_side(self, node_pool, link):
-        rel_ang = self.get_rel_ang(node_pool, link)
-        if(rel_ang is None):
+        type = self.get_link_type(link)
+        if(type is None):
             return None
         else:
-            return 'L' if rel_ang > 0 else 'R'
+            rel_ang = self.get_rel_ang(node_pool, link)
+            if(type == 'entrance'):
+                return 'R' if rel_ang > 0 else 'L'
+            else:
+                return 'L' if rel_ang > 0 else 'R'
+
 
 class Hwy:
     def __init__(self, name, start_idx, end_idx, pool):
