@@ -88,3 +88,32 @@ class Exit(Element):
             rotation=90
         )
         return path
+
+    def render(self, relpos, pos):
+        return self.dwg.line(
+             start=(
+                 (relpos[0] + (pos)*self.row.gs)*mm,
+                 relpos[1]*mm
+             ),
+             end=(
+                 (relpos[0] + (pos+1)*self.row.gs)*mm,
+                 (relpos[1] + self.row.gs)*mm
+             ),
+             stroke='black',
+             stroke_width=1
+        )
+
+class Entrance(Element):
+    def render(self, relpos, pos):
+        return self.dwg.line(
+             start=(
+                 (relpos[0] + (pos+1)*self.row.gs)*mm,
+                 relpos[1]*mm
+             ),
+             end=(
+                 (relpos[0] + (pos)*self.row.gs)*mm,
+                 (relpos[1] + self.row.gs)*mm
+             ),
+             stroke='black',
+             stroke_width=1
+        )

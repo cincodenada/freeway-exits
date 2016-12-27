@@ -80,6 +80,7 @@ for start in hwys.get_hwy('I 5').starts:
                 row.add_element(render.Exit())
             if(len(curseg.entrances)):
                 lanes += '<-' + ';'.join([s.describe_link(curseg) for s in curseg.exits])
+                row.add_element(render.Entrance())
             print(lanes)
             curlanes = curseg.lanes
         curseg = curseg.next
