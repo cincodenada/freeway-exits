@@ -11,7 +11,7 @@ class Drawing:
     def render(self):
         cur_pos = 0
         for r in self.rows:
-            r.render((cur_pos, 0))
+            r.render((0, cur_pos))
             cur_pos += self.gs
 
     def save(self):

@@ -84,6 +84,7 @@ for start in hwys.get_hwy('I 5').starts:
         curseg = curseg.next
     print('H'*curlanes)
     print("---")
+    dwg.add_row(0)
 
 dwg.render()
 dwg.save()
