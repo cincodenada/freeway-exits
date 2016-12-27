@@ -6,9 +6,9 @@ root = tree.getroot()
 
 class Node:
     def __init__(self, xmlobj):
-        self.id = xmlobj.get('id')
-        self.lat = xmlobj.get('lat')
-        self.lon = xmlobj.get('lon')
+        self.id = int(xmlobj.get('id'))
+        self.lat = float(xmlobj.get('lat'))
+        self.lon = float(xmlobj.get('lon'))
         type = xmlobj.find('./tag[@k="highway"]')
         if(type == 'motorway_junction'):
             self.name = xmlobj.find('./tag[@k="ref"]').get('v')
@@ -47,9 +47,8 @@ class HwySeg:
         self.entrances = []
 
     def describe_link(self, trunk):
-        # TODO: Factor out nodecoords here
         fromto = 'to' if trunk.get_link_type(self) == 'exit' else 'from'
-        side = trunk.get_side(nodecoords, self)
+        side = trunk.get_side(self)
         dest = self.dest if self.dest else '???'
         return '{} {} {} ({})'.format(self.name, fromto, dest, side)
 
