@@ -1,0 +1,61 @@
+import svgwrite
+from svgwrite import mm
+
+class Drawing:
+    def __init__(self, gridsize):
+        self.gs = gridsize
+        self.rows = []
+        self.dwg = svgwrite.Drawing(filename='out.svg', debug=True)
+        self.cur_row = 0
+
+    def render(self):
+        cur_pos = 0
+        for r in self.rows:
+            r.render((cur_pos, 0))
+            cur_pos += self.gs
+
+    def save(self):
+        return self.dwg.save()
+
+    def add_row(self, start_pos):
+        row = Row(self, self.cur_row, start_pos)
+        self.rows.append(row)
+        self.cur_row =+ 1
+        return row
+
+class Row:
+    def __init__(self, drawing, id, start_pos):
+        self.members = []
+        self.start_pos = start_pos
+        self.dwg = drawing.dwg
+        self.gs = drawing.gs
+        self.id = id
+
+    def render(self, pos):
+        self.g = self.dwg.add(self.dwg.g(id='row' + str(self.id)))
+        cur_pos = self.start_pos
+        for m in self.members:
+            self.g.add(m.render(pos, cur_pos))
+            cur_pos += 1
+
+    def add_element(self, el):
+        el.set_row(self)
+        self.members.append(el)
+
+class Element:
+    def set_row(self, row):
+        self.row = row
+        self.dwg = row.dwg
+
+class Lane(Element):
+    def render(self, relpos, pos):
+        return self.dwg.rect(
+            insert=(
+                (relpos[0] + pos*self.row.gs)*mm,
+                relpos[1]*mm
+            ),
+            size=(self.row.gs*mm, self.row.gs*mm),
+            fill='white',
+            stroke='black',
+            stroke_width=1,
+        )

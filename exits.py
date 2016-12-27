@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 from hwy import Node, HwySeg, Hwy, HwySet
+import render
 
 tree = ET.parse('motorway.osm')
 root = tree.getroot()
@@ -64,11 +65,15 @@ for (id, seg) in hwy_segs.items():
 for (id, link) in links.items():
     hwys.add_link(link)
 
+dwg = render.Drawing(10)
 for start in hwys.get_hwy('I 5').starts:
     curseg = start
     curlanes = start.lanes
     while curseg.next:
         if(curlanes != curseg.lanes or len(curseg.exits) or len(curseg.entrances)):
+            row = dwg.add_row(0)
+            for n in range(curlanes):
+                row.add_element(render.Lane())
             lanes = 'H'*curlanes
             if(len(curseg.exits)):
                 lanes += '-> ' + ';'.join([s.describe_link(curseg) for s in curseg.exits])
@@ -79,3 +84,6 @@ for start in hwys.get_hwy('I 5').starts:
         curseg = curseg.next
     print('H'*curlanes)
     print("---")
+
+dwg.render()
+dwg.save()
