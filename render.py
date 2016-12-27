@@ -49,13 +49,42 @@ class Element:
 
 class Lane(Element):
     def render(self, relpos, pos):
-        return self.dwg.rect(
-            insert=(
+        g = self.dwg.g()
+        g.add(self.dwg.line(
+            start=(
                 (relpos[0] + pos*self.row.gs)*mm,
                 relpos[1]*mm
             ),
-            size=(self.row.gs*mm, self.row.gs*mm),
-            fill='white',
+            end=(
+                (relpos[0] + pos*self.row.gs)*mm,
+                (relpos[1] + self.row.gs)*mm
+            ),
             stroke='black',
-            stroke_width=1,
+            stroke_width=1
+        ))
+        g.add(self.dwg.line(
+            start=(
+                (relpos[0] + (pos+1)*self.row.gs)*mm,
+                relpos[1]*mm
+            ),
+            end=(
+                (relpos[0] + (pos+1)*self.row.gs)*mm,
+                (relpos[1] + self.row.gs)*mm
+            ),
+            stroke='black',
+            stroke_width=1
+        ))
+        return g
+
+class Exit(Element):
+    def render(self, relpos, pos):
+        path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs)*mm, relpos[1]*mm))
+        path.push_arc(
+            target=(
+                (relpos[0] + (pos+1)*self.row.gs)*mm,
+                (relpos[1] + self.row.gs)*mm
+            ),
+            r=self.row.gs,
+            rotation=90
         )
+        return path
