@@ -131,12 +131,15 @@ class Label(Element):
         self.text = text
 
     def render(self, relpos, pos):
-        anchor = 'end' if (pos == self.row.start_pos) else 'start'
+        is_left = (pos == self.row.start_pos)
+        anchor = 'end' if is_left else 'start'
+        our_pos = (pos+1) if is_left else pos
 
+        #TODO: Figure out a baseline to center this vertically as well
         return self.dwg.text(self.text,
             insert=(
-                (relpos[0] + (pos+1)*self.row.gs)*mm,
-                relpos[1]*mm
+                (relpos[0] + our_pos*self.row.gs)*mm,
+                (relpos[1] + self.row.gs*0.5)*mm
             ),
             text_anchor=anchor
         )
