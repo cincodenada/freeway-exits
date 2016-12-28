@@ -52,15 +52,27 @@ for (id, link) in links.items():
 dwg = render.Drawing(10)
 for start in hwys.get_hwy('I 5').starts:
     curseg = start
-    curlanes = start.lanes
+    lastlanes = start.lanes
+    prevlanes = start.lanes
+    base_pos = 0
     while curseg.next:
-        if(curlanes != curseg.lanes or len(curseg.exits) or len(curseg.entrances)):
-            left_exits = [e for e in curseg.exits if curseg.get_side(e) == 'L']
-            start_pos = -2 if len(left_exits) else 0
-            row = dwg.add_row(start_pos)
-            for n in range(curlanes):
+        if(lastlanes != curseg.lanes or len(curseg.exits) or len(curseg.entrances)):
+            left_exits = len([e for e in curseg.exits if curseg.get_side(e) == 'L'])
+            right_exits = len([e for e in curseg.exits if curseg.get_side(e) == 'R'])
+
+            if(left_exits):
+                print(curseg.exits)
+                print(curseg.exits[0].describe_link(curseg))
+                print('{}->{}'.format(lastlanes, curseg.lanes))
+
+            if(left_exits and prevlanes > lastlanes):
+                base_pos += 1
+
+            text_adj = -2 if left_exits else 0
+            row = dwg.add_row(base_pos + text_adj)
+            for n in range(lastlanes):
                 row.add_element(render.Lane())
-            lanes = 'H'*curlanes
+            lanes = 'H'*lastlanes
             if(len(curseg.exits)):
                 for link in curseg.exits:
                     is_left = (curseg.get_side(link) == 'L')
@@ -74,9 +86,10 @@ for start in hwys.get_hwy('I 5').starts:
 #                   row.add_element(render.Label(link.describe_link(curseg)), is_left)
 #               lanes += '<-' + ';'.join([s.describe_link(curseg) for s in curseg.entrances])
             print(lanes)
-            curlanes = curseg.lanes
+            prevlanes = lastlanes
+            lastlanes = curseg.lanes
         curseg = curseg.next
-    print('H'*curlanes)
+    print('H'*lastlanes)
     print("---")
     dwg.add_row(0)
 

@@ -95,7 +95,7 @@ class Exit(Element):
         return path
 
     def render(self, relpos, pos):
-        ycoords = [relpos[1] + self.row.gs, relpos[1]]
+        ycoords = [relpos[1], relpos[1] + self.row.gs]
         if(pos == self.row.start_pos + 1):
             ycoords.reverse()
         return self.dwg.line(
