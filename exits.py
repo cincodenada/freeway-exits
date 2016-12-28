@@ -60,11 +60,17 @@ for start in hwys.get_hwy('I 5').starts:
                 row.add_element(render.Lane())
             lanes = 'H'*curlanes
             if(len(curseg.exits)):
+                for link in curseg.exits:
+                    is_left = (curseg.get_side(link) == 'L')
+                    row.add_element(render.Exit(), is_left)
+                    row.add_element(render.Label(link.describe_link(curseg)), is_left)
                 lanes += '-> ' + ';'.join([s.describe_link(curseg) for s in curseg.exits])
-                row.add_element(render.Exit())
-            if(len(curseg.entrances)):
-                lanes += '<-' + ';'.join([s.describe_link(curseg) for s in curseg.exits])
-                row.add_element(render.Entrance())
+#           if(len(curseg.entrances)):
+#               for link in curseg.entrances:
+#                   is_left = (curseg.get_side(link) == 'L')
+#                   row.add_element(render.Entrance(), is_left)
+#                   row.add_element(render.Label(link.describe_link(curseg)), is_left)
+#               lanes += '<-' + ';'.join([s.describe_link(curseg) for s in curseg.entrances])
             print(lanes)
             curlanes = curseg.lanes
         curseg = curseg.next

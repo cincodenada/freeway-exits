@@ -38,9 +38,14 @@ class Row:
             self.g.add(m.render(pos, cur_pos))
             cur_pos += 1
 
-    def add_element(self, el):
+    def add_element(self, el, insert = False):
+        if(isinstance(insert, bool)):
+            pos = 0 if insert else len(self.members)
+        else:
+            pos = insert
+
         el.set_row(self)
-        self.members.append(el)
+        self.members.insert(pos, el)
 
 class Element:
     def set_row(self, row):
@@ -116,4 +121,19 @@ class Entrance(Element):
              ),
              stroke='black',
              stroke_width=1
+        )
+
+class Label(Element):
+    def __init__(self, text):
+        self.text = text
+
+    def render(self, relpos, pos):
+        anchor = 'end' if (pos == self.row.start_pos) else 'start'
+
+        return self.dwg.text(self.text,
+            insert=(
+                (relpos[0] + (pos+1)*self.row.gs)*mm,
+                relpos[1]*mm
+            ),
+            text_anchor=anchor
         )
