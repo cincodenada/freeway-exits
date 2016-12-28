@@ -5,10 +5,13 @@ class Node:
         self.id = int(xmlobj.get('id'))
         self.lat = float(xmlobj.get('lat'))
         self.lon = float(xmlobj.get('lon'))
-        type = xmlobj.find('./tag[@k="highway"]')
-        if(type == 'motorway_junction'):
-            self.name = xmlobj.find('./tag[@k="ref"]').get('v')
-        else:
+        try:
+            nodetype = xmlobj.find("./tag[@k='highway']").get('v')
+            if(nodetype == 'motorway_junction'):
+                self.name = xmlobj.find("./tag[@k='ref']").get('v')
+            else:
+                self.name = None
+        except AttributeError:
             self.name = None
 
 class HwySeg:
@@ -46,7 +49,7 @@ class HwySeg:
         fromto = 'to' if trunk.get_link_type(self) == 'exit' else 'from'
         side = trunk.get_side(self)
         dest = self.dest if self.dest else '???'
-        return '{} {} {}'.format(self.name, fromto, dest, side)
+        return '{} {} {}'.format(self.node_pool[self.start].name, fromto, dest, side)
 
     def get_tag(self, k):
         tagel = self.el.find("./tag[@k='{}']".format(k))
