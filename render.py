@@ -95,14 +95,17 @@ class Exit(Element):
         return path
 
     def render(self, relpos, pos):
+        ycoords = [relpos[1], relpos[1] + self.row.gs]
+        if(pos == self.row.start_pos + 1):
+            ycoords.reverse()
         return self.dwg.line(
              start=(
                  (relpos[0] + (pos)*self.row.gs)*mm,
-                 relpos[1]*mm
+                 ycoords[0]*mm
              ),
              end=(
                  (relpos[0] + (pos+1)*self.row.gs)*mm,
-                 (relpos[1] + self.row.gs)*mm
+                 ycoords[1]*mm
              ),
              stroke='black',
              stroke_width=1

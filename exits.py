@@ -55,7 +55,9 @@ for start in hwys.get_hwy('I 5').starts:
     curlanes = start.lanes
     while curseg.next:
         if(curlanes != curseg.lanes or len(curseg.exits) or len(curseg.entrances)):
-            row = dwg.add_row(0)
+            left_exits = [e for e in curseg.exits if curseg.get_side(e) == 'L']
+            start_pos = -2 if len(left_exits) else 0
+            row = dwg.add_row(start_pos)
             for n in range(curlanes):
                 row.add_element(render.Lane())
             lanes = 'H'*curlanes
