@@ -68,8 +68,14 @@ class HwySeg:
         if(start_node is None):
             start_node = len(self.nodes)-1 if rev else 0
 
+        end_node = start_node-2 if rev else start_node+2
+        step = -1 if rev else 1
+        # Deal with list[1:-1:-1] not working as expected
+        if end_node == -1:
+            end_node = None
+
         if(len(self.nodes) >= 2):
-            p = [self.node_pool[n] for n in (self.nodes[start_node:start_node-2:-1] if rev else self.nodes[start_node:start_node+2])]
+            p = [self.node_pool[n] for n in self.nodes[start_node:end_node:step]]
             return math.atan2(p[1].lon - p[0].lon, p[1].lat - p[0].lat)
         else:
             return None
