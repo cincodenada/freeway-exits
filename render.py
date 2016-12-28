@@ -82,8 +82,8 @@ class Lane(Element):
         return g
 
 class Exit(Element):
-    def render(self, relpos, pos):
-        path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs)*mm, relpos[1]*mm))
+    def render_arc(self, relpos, pos):
+        path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs), relpos[1]))
         path.push_arc(
             target=(
                 (relpos[0] + (pos+1)*self.row.gs)*mm,
@@ -95,7 +95,7 @@ class Exit(Element):
         return path
 
     def render(self, relpos, pos):
-        ycoords = [relpos[1], relpos[1] + self.row.gs]
+        ycoords = [relpos[1] + self.row.gs, relpos[1]]
         if(pos == self.row.start_pos + 1):
             ycoords.reverse()
         return self.dwg.line(

@@ -46,7 +46,7 @@ class HwySeg:
         fromto = 'to' if trunk.get_link_type(self) == 'exit' else 'from'
         side = trunk.get_side(self)
         dest = self.dest if self.dest else '???'
-        return '{} {} {} ({})'.format(self.name, fromto, dest, side)
+        return '{} {} {}'.format(self.name, fromto, dest, side)
 
     def get_tag(self, k):
         tagel = self.el.find("./tag[@k='{}']".format(k))
@@ -103,7 +103,7 @@ class HwySeg:
             return None
         else:
             rel_ang = self.get_rel_ang(link)
-            if(type == 'entrance'):
+            if(type == 'exit'):
                 return 'R' if rel_ang > 0 else 'L'
             else:
                 return 'L' if rel_ang > 0 else 'R'
