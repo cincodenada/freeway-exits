@@ -49,7 +49,7 @@ for (id, seg) in hwy_segs.items():
 for (id, link) in links.items():
     hwys.add_link(link)
 
-dwg = render.Drawing(10)
+dwg = render.Diagram(10)
 for start in hwys.get_hwy('I 5').starts:
     curseg = start
     lastlanes = start.lanes
@@ -63,12 +63,14 @@ for start in hwys.get_hwy('I 5').starts:
                 print(curseg.exit.describe_link(curseg))
                 print('{}->{}'.format(lastlanes, curseg.lanes))
 
+            # If we lost a lane and there's a left exit,
+            # shift the lanes over 1 to make the leftmost lane an exit
             if(left_exit and lastlanes > curseg.lanes):
                 base_pos += 1
 
             text_adj = -2 if left_exit else 0
             row = dwg.add_row(base_pos + text_adj)
-            for n in range(lastlanes):
+            for n in range(curseg.lanes):
                 row.add_element(render.Lane())
             lanes = 'H'*lastlanes
             if(curseg.exit):
@@ -88,5 +90,6 @@ for start in hwys.get_hwy('I 5').starts:
     print("---")
     dwg.add_row(0)
 
+dwg.render('text')
 dwg.render()
 dwg.save()

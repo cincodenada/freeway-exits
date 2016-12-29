@@ -1,17 +1,17 @@
 import svgwrite
 from svgwrite import mm
 
-class Drawing:
+class Diagram:
     def __init__(self, gridsize):
         self.gs = gridsize
         self.rows = []
         self.dwg = svgwrite.Drawing(filename='out.svg', debug=True)
         self.cur_row = 0
 
-    def render(self):
+    def render(self, fmt = 'svg'):
         cur_pos = 0
         for r in self.rows:
-            r.render((0, cur_pos))
+            r.render(fmt, (0, cur_pos))
             cur_pos += self.gs
 
     def save(self):
@@ -31,12 +31,21 @@ class Row:
         self.gs = drawing.gs
         self.id = id
 
-    def render(self, pos):
-        self.g = self.dwg.add(self.dwg.g(id='row' + str(self.id)))
+    def render(self, fmt, pos):
+        if(fmt == 'svg'):
+            self.g = self.dwg.add(self.dwg.g(id='row' + str(self.id)))
+        else:
+            row = " "*self.start_pos
         cur_pos = self.start_pos
         for m in self.members:
-            self.g.add(m.render(pos, cur_pos))
+            member = m.render(fmt, pos, cur_pos)
+            if(fmt == 'svg'):
+                self.g.add(member)
+            else:
+                row += member
             cur_pos += 1
+        if(fmt == 'text'):
+            print(row)
 
     def add_element(self, el, insert = False):
         if(isinstance(insert, bool)):
@@ -53,7 +62,9 @@ class Element:
         self.dwg = row.dwg
 
 class Lane(Element):
-    def render(self, relpos, pos):
+    def render(self, fmt, relpos, pos):
+        if(fmt == 'text'):
+            return '║'
         g = self.dwg.g()
         g.add(self.dwg.line(
             start=(
@@ -94,7 +105,9 @@ class Exit(Element):
         )
         return path
 
-    def render(self, relpos, pos):
+    def render(self, fmt, relpos, pos):
+        if(fmt == 'text'):
+            return '╗' if (pos == self.row.start_pos + 1) else '╔'
         ycoords = [relpos[1], relpos[1] + self.row.gs]
         if(pos == self.row.start_pos + 1):
             ycoords.reverse()
@@ -112,7 +125,9 @@ class Exit(Element):
         )
 
 class Entrance(Element):
-    def render(self, relpos, pos):
+    def render(self, fmt, relpos, pos):
+        if(fmt == 'text'):
+            return '╔' if (pos == self.row.start_pos + 1) else '╗'
         return self.dwg.line(
              start=(
                  (relpos[0] + (pos+1)*self.row.gs)*mm,
@@ -130,8 +145,10 @@ class Label(Element):
     def __init__(self, text):
         self.text = text
 
-    def render(self, relpos, pos):
+    def render(self, fmt, relpos, pos):
         is_left = (pos == self.row.start_pos)
+        if(fmt == 'text'):
+            return '*' if(is_left) else self.text
         anchor = 'end' if is_left else 'start'
         our_pos = (pos+1) if is_left else pos
 
