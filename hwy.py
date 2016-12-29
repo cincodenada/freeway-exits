@@ -42,8 +42,8 @@ class HwySeg:
 
         self.prev = None
         self.next = None
-        self.exits = []
-        self.entrances = []
+        self.exit = None
+        self.entrance = None
 
     def describe_link(self, trunk):
         fromto = 'to' if trunk.get_link_type(self) == 'exit' else 'from'
@@ -117,6 +117,20 @@ class HwySeg:
             else:
                 return 'L' if rel_ang > 0 else 'R'
 
+    def set_exit(self, link):
+        if(self.exit):
+            print(link.id)
+            print('Exit already assigned!')
+        else:
+            self.exit = link
+
+    def set_entrance(self, link):
+        if(self.entrance):
+            print(link.id)
+            print('Entrance already assigned!')
+        else:
+            self.entrance = link
+
 
 class Hwy:
     def __init__(self, name, start_idx, end_idx, pool):
@@ -144,9 +158,9 @@ class Hwy:
 
     def add_link(self, link):
         if(link.start in self.start_idx):
-            self.pool[self.start_idx[link.start]].exits.append(link)
+            self.pool[self.start_idx[link.start]].set_exit(link)
         if(link.end in self.end_idx):
-            self.pool[self.end_idx[link.end]].entrances.append(link)
+            self.pool[self.end_idx[link.end]].set_entrance(link)
 
 class HwySet:
     def __init__(self, segs):

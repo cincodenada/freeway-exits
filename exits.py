@@ -56,35 +56,32 @@ for start in hwys.get_hwy('I 5').starts:
     prevlanes = start.lanes
     base_pos = 0
     while curseg.next:
-        if(lastlanes != curseg.lanes or len(curseg.exits) or len(curseg.entrances)):
-            left_exits = len([e for e in curseg.exits if curseg.get_side(e) == 'L'])
-            right_exits = len([e for e in curseg.exits if curseg.get_side(e) == 'R'])
+        if(lastlanes != curseg.lanes or curseg.exit or curseg.entrance):
+            left_exit = curseg.exit and curseg.get_side(curseg.exit) == 'L'
 
-            if(left_exits):
-                print(curseg.exits)
-                print(curseg.exits[0].describe_link(curseg))
+            if(left_exit):
+                print(curseg.exit)
+                print(curseg.exit.describe_link(curseg))
                 print('{}->{}'.format(lastlanes, curseg.lanes))
 
-            if(left_exits and prevlanes > lastlanes):
+            if(left_exit and prevlanes > lastlanes):
                 base_pos += 1
 
-            text_adj = -2 if left_exits else 0
+            text_adj = -2 if left_exit else 0
             row = dwg.add_row(base_pos + text_adj)
             for n in range(lastlanes):
                 row.add_element(render.Lane())
             lanes = 'H'*lastlanes
-            if(len(curseg.exits)):
-                for link in curseg.exits:
-                    is_left = (curseg.get_side(link) == 'L')
-                    row.add_element(render.Exit(), is_left)
-                    row.add_element(render.Label(link.describe_link(curseg)), is_left)
-                lanes += '-> ' + ';'.join([s.describe_link(curseg) for s in curseg.exits])
-            if(len(curseg.entrances)):
-                for link in curseg.entrances:
-                    is_left = (curseg.get_side(link) == 'L')
-                    row.add_element(render.Entrance(), is_left)
-                    row.add_element(render.Label(link.describe_link(curseg)), is_left)
-                lanes += '<-' + ';'.join([s.describe_link(curseg) for s in curseg.entrances])
+            if(curseg.exit):
+                is_left = (curseg.get_side(curseg.exit) == 'L')
+                row.add_element(render.Exit(), is_left)
+                row.add_element(render.Label(curseg.exit.describe_link(curseg)), is_left)
+                lanes += '-> ' + curseg.exit.describe_link(curseg)
+            if(curseg.entrance):
+                is_left = (curseg.get_side(curseg.entrance) == 'L')
+                row.add_element(render.Entrance(), is_left)
+                row.add_element(render.Label(curseg.entrance.describe_link(curseg)), is_left)
+                lanes += '<-' + curseg.entrance.describe_link(curseg)
             print(lanes)
             prevlanes = lastlanes
             lastlanes = curseg.lanes
