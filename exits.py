@@ -53,7 +53,6 @@ dwg = render.Drawing(10)
 for start in hwys.get_hwy('I 5').starts:
     curseg = start
     lastlanes = start.lanes
-    prevlanes = start.lanes
     base_pos = 0
     while curseg.next:
         if(lastlanes != curseg.lanes or curseg.exit or curseg.entrance):
@@ -64,7 +63,7 @@ for start in hwys.get_hwy('I 5').starts:
                 print(curseg.exit.describe_link(curseg))
                 print('{}->{}'.format(lastlanes, curseg.lanes))
 
-            if(left_exit and prevlanes > lastlanes):
+            if(left_exit and lastlanes > curseg.lanes):
                 base_pos += 1
 
             text_adj = -2 if left_exit else 0
@@ -83,8 +82,7 @@ for start in hwys.get_hwy('I 5').starts:
                 row.add_element(render.Label(curseg.entrance.describe_link(curseg)), is_left)
                 lanes += '<-' + curseg.entrance.describe_link(curseg)
             print(lanes)
-            prevlanes = lastlanes
-            lastlanes = curseg.lanes
+        lastlanes = curseg.lanes
         curseg = curseg.next
     print('H'*lastlanes)
     print("---")
