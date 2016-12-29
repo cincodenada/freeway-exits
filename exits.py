@@ -56,30 +56,36 @@ for start in hwys.get_hwy('I 5').starts:
     base_pos = 0
     while curseg.next:
         if(lastlanes != curseg.lanes or curseg.exit or curseg.entrance):
-            left_exit = curseg.exit and curseg.get_side(curseg.exit) == 'L'
-
-            if(left_exit):
-                print(curseg.exit)
-                print(curseg.exit.describe_link(curseg))
-                print('{}->{}'.format(lastlanes, curseg.lanes))
-
-            # If we lost a lane and there's a left exit,
-            # shift the lanes over 1 to make the leftmost lane an exit
-            if(left_exit and lastlanes > curseg.lanes):
-                base_pos += 1
-
-            text_adj = -2 if left_exit else 0
-            row = dwg.add_row(base_pos + text_adj)
-            for n in range(curseg.lanes):
-                row.add_element(render.Lane())
-            lanes = 'H'*lastlanes
+            lanes = 'H'*curseg.lanes
             if(curseg.exit):
                 is_left = (curseg.get_side(curseg.exit) == 'L')
+
+                # If we lost a lane and there's a left exit,
+                # shift the lanes over 1 to make the leftmost lane an exit
+                if(is_left and lastlanes > curseg.lanes):
+                    base_pos += 1
+                text_adj = -2 if is_left else 0
+                row = dwg.add_row(base_pos + text_adj)
+                for n in range(curseg.lanes):
+                    row.add_element(render.Lane())
+
                 row.add_element(render.Exit(), is_left)
                 row.add_element(render.Label(curseg.exit.describe_link(curseg)), is_left)
                 lanes += '-> ' + curseg.exit.describe_link(curseg)
+
+                # Update lastlanes for entrance rendering
+                lastlanes = curseg.lanes
+
             if(curseg.entrance):
                 is_left = (curseg.get_side(curseg.entrance) == 'L')
+
+                if(is_left and lastlanes < curseg.lanes):
+                    base_pos -= 1
+                text_adj = -2 if is_left else 0
+                row = dwg.add_row(base_pos + text_adj)
+                for n in range(curseg.lanes):
+                    row.add_element(render.Lane())
+
                 row.add_element(render.Entrance(), is_left)
                 row.add_element(render.Label(curseg.entrance.describe_link(curseg)), is_left)
                 lanes += '<-' + curseg.entrance.describe_link(curseg)
