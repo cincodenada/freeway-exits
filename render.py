@@ -57,9 +57,19 @@ class Row:
         self.members.insert(pos, el)
 
 class Element:
+    bez_circle_dist = 0.551915024494
     def set_row(self, row):
         self.row = row
         self.dwg = row.dwg
+
+    def render_arc(self, relpos, pos):
+        path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs), relpos[1]))
+        path.push('C',
+            (relpos[0] + pos*self.row.gs), (relpos[1] + self.bez_circle_dist*self.row.gs),
+            (relpos[0] + (pos + 1 - self.bez_circle_dist)*self.row.gs), (relpos[1] + self.row.gs),
+            (relpos[0] + (pos + 1)*self.row.gs), (relpos[1] + self.row.gs)
+        )
+        return path
 
 class Lane(Element):
     def render(self, fmt, relpos, pos):
@@ -116,21 +126,10 @@ class Lane(Element):
         return g
 
 class Exit(Element):
-    def render_arc(self, relpos, pos):
-        path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs), relpos[1]))
-        path.push_arc(
-            target=(
-                (relpos[0] + (pos+1)*self.row.gs),
-                (relpos[1] + self.row.gs)
-            ),
-            r=self.row.gs,
-            rotation=90
-        )
-        return path
-
     def render(self, fmt, relpos, pos):
         if(fmt == 'text'):
             return '╗' if (pos == self.row.start_pos + 1) else '╔'
+        return self.render_arc(relpos, pos)
         ycoords = [relpos[1], relpos[1] + self.row.gs]
         if(pos == self.row.start_pos + 1):
             ycoords.reverse()
