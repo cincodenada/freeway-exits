@@ -62,14 +62,29 @@ class Element:
         self.row = row
         self.dwg = row.dwg
 
-    def render_arc(self, relpos, pos):
+    def render_arc(self, relpos, pos, rot=0):
+        g = self.dwg.g()
         path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs), relpos[1]))
-        path.push('C',
-            (relpos[0] + pos*self.row.gs), (relpos[1] + self.bez_circle_dist*self.row.gs),
-            (relpos[0] + (pos + 1 - self.bez_circle_dist)*self.row.gs), (relpos[1] + self.row.gs),
-            (relpos[0] + (pos + 1)*self.row.gs), (relpos[1] + self.row.gs)
+        path.push('c',
+            0, (self.bez_circle_dist*self.row.gs),
+            (1 - self.bez_circle_dist)*self.row.gs, self.row.gs,
+            self.row.gs, self.row.gs
         )
-        return path
+        path.push('l', 0, -self.row.gs)
+        path.push('l', -self.row.gs, 0)
+        path.fill(color='gray')
+        g.add(path)
+        path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs), relpos[1]))
+        path.push('c',
+            0, (self.bez_circle_dist*self.row.gs),
+            (1 - self.bez_circle_dist)*self.row.gs, self.row.gs,
+            self.row.gs, self.row.gs
+        )
+        path.fill(opacity=0)
+        path.stroke(color='black',width=1)
+        g.add(path)
+        g.rotate(rot, (relpos[0] + (pos+0.5)*self.row.gs, relpos[1] + 0.5*self.row.gs))
+        return g
 
 class Lane(Element):
     def render(self, fmt, relpos, pos):
@@ -129,39 +144,14 @@ class Exit(Element):
     def render(self, fmt, relpos, pos):
         if(fmt == 'text'):
             return '╗' if (pos == self.row.start_pos + 1) else '╔'
-        return self.render_arc(relpos, pos)
-        ycoords = [relpos[1], relpos[1] + self.row.gs]
-        if(pos == self.row.start_pos + 1):
-            ycoords.reverse()
-        return self.dwg.line(
-             start=(
-                 (relpos[0] + (pos)*self.row.gs),
-                 ycoords[0]
-             ),
-             end=(
-                 (relpos[0] + (pos+1)*self.row.gs),
-                 ycoords[1]
-             ),
-             stroke='black',
-             stroke_width=1
-        )
+        rot = 90 if (pos == self.row.start_pos + 1) else 0
+        return self.render_arc(relpos, pos, rot)
 
 class Entrance(Element):
     def render(self, fmt, relpos, pos):
         if(fmt == 'text'):
             return '╔' if (pos == self.row.start_pos + 1) else '╗'
-        return self.dwg.line(
-             start=(
-                 (relpos[0] + (pos+1)*self.row.gs),
-                 relpos[1]
-             ),
-             end=(
-                 (relpos[0] + (pos)*self.row.gs),
-                 (relpos[1] + self.row.gs)
-             ),
-             stroke='black',
-             stroke_width=1
-        )
+        return self.render_arc(relpos, pos, 180)
 
 class Label(Element):
     def __init__(self, text):
