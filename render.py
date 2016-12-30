@@ -68,24 +68,24 @@ class Lane(Element):
         g = self.dwg.g()
         g.add(self.dwg.line(
             start=(
-                (relpos[0] + pos*self.row.gs)*mm,
-                relpos[1]*mm
+                (relpos[0] + pos*self.row.gs),
+                relpos[1]
             ),
             end=(
-                (relpos[0] + pos*self.row.gs)*mm,
-                (relpos[1] + self.row.gs)*mm
+                (relpos[0] + pos*self.row.gs),
+                (relpos[1] + self.row.gs)
             ),
             stroke='black',
             stroke_width=1
         ))
         g.add(self.dwg.line(
             start=(
-                (relpos[0] + (pos+1)*self.row.gs)*mm,
-                relpos[1]*mm
+                (relpos[0] + (pos+1)*self.row.gs),
+                relpos[1]
             ),
             end=(
-                (relpos[0] + (pos+1)*self.row.gs)*mm,
-                (relpos[1] + self.row.gs)*mm
+                (relpos[0] + (pos+1)*self.row.gs),
+                (relpos[1] + self.row.gs)
             ),
             stroke='black',
             stroke_width=1
@@ -97,8 +97,8 @@ class Exit(Element):
         path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs), relpos[1]))
         path.push_arc(
             target=(
-                (relpos[0] + (pos+1)*self.row.gs)*mm,
-                (relpos[1] + self.row.gs)*mm
+                (relpos[0] + (pos+1)*self.row.gs),
+                (relpos[1] + self.row.gs)
             ),
             r=self.row.gs,
             rotation=90
@@ -113,12 +113,12 @@ class Exit(Element):
             ycoords.reverse()
         return self.dwg.line(
              start=(
-                 (relpos[0] + (pos)*self.row.gs)*mm,
-                 ycoords[0]*mm
+                 (relpos[0] + (pos)*self.row.gs),
+                 ycoords[0]
              ),
              end=(
-                 (relpos[0] + (pos+1)*self.row.gs)*mm,
-                 ycoords[1]*mm
+                 (relpos[0] + (pos+1)*self.row.gs),
+                 ycoords[1]
              ),
              stroke='black',
              stroke_width=1
@@ -130,12 +130,12 @@ class Entrance(Element):
             return '╔' if (pos == self.row.start_pos + 1) else '╗'
         return self.dwg.line(
              start=(
-                 (relpos[0] + (pos+1)*self.row.gs)*mm,
-                 relpos[1]*mm
+                 (relpos[0] + (pos+1)*self.row.gs),
+                 relpos[1]
              ),
              end=(
-                 (relpos[0] + (pos)*self.row.gs)*mm,
-                 (relpos[1] + self.row.gs)*mm
+                 (relpos[0] + (pos)*self.row.gs),
+                 (relpos[1] + self.row.gs)
              ),
              stroke='black',
              stroke_width=1
@@ -155,8 +155,8 @@ class Label(Element):
         #TODO: Figure out a baseline to center this vertically as well
         return self.dwg.text(self.text,
             insert=(
-                (relpos[0] + our_pos*self.row.gs)*mm,
-                (relpos[1] + self.row.gs*0.5)*mm
+                (relpos[0] + our_pos*self.row.gs),
+                (relpos[1] + self.row.gs*0.5)
             ),
             text_anchor=anchor
         )

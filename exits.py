@@ -49,7 +49,7 @@ for (id, seg) in hwy_segs.items():
 for (id, link) in links.items():
     hwys.add_link(link)
 
-dwg = render.Diagram(10)
+dwg = render.Diagram(20)
 for start in hwys.get_hwy('I 5').starts:
     curseg = start
     lastlanes = start.lanes
