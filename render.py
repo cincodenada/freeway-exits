@@ -65,8 +65,24 @@ class Lane(Element):
     def render(self, fmt, relpos, pos):
         if(fmt == 'text'):
             return '║'
+
+        is_leftmost = (pos == self.row.start_pos)
+        is_rightmost = (pos == len(self.row.members) - 1)
+
         g = self.dwg.g()
-        g.add(self.dwg.line(
+        g.add(self.dwg.rect(
+            insert=(
+                (relpos[0] + pos*self.row.gs),
+                relpos[1]
+            ),
+            size=(
+                self.row.gs,
+                self.row.gs
+            ),
+            fill='gray',
+        ))
+
+        left_side = self.dwg.line(
             start=(
                 (relpos[0] + pos*self.row.gs),
                 relpos[1]
@@ -77,8 +93,12 @@ class Lane(Element):
             ),
             stroke='black',
             stroke_width=1
-        ))
-        g.add(self.dwg.line(
+        )
+        if(not is_leftmost):
+            left_side.dasharray([2,2])
+        g.add(left_side)
+
+        right_side = self.dwg.line(
             start=(
                 (relpos[0] + (pos+1)*self.row.gs),
                 relpos[1]
@@ -89,7 +109,10 @@ class Lane(Element):
             ),
             stroke='black',
             stroke_width=1
-        ))
+        )
+        if(not is_rightmost):
+            right_side.dasharray([2,2])
+        g.add(right_side)
         return g
 
 class Exit(Element):
