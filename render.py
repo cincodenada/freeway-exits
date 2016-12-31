@@ -44,20 +44,22 @@ class Row:
             lane_adj = 0
             for l in self.links:
                 if(isinstance(l, Exit)):
-                    lane_diff+=1
-                    if(l.side == 'L'):
-                        lane_adj += 1
+                    if(lane_diff < 0):
+                        lane_diff+=1
+                        if(l.side == 'L'):
+                            lane_adj += 1
                 elif(isinstance(l, Entrance)):
-                    lane_diff-=1
-                    if(l.side == 'L'):
-                        lane_adj += 1
+                    if(lane_diff > 0):
+                        lane_diff-=1
+                        if(l.side == 'L'):
+                            lane_adj += 1
             total_diff = lane_diff - lane_adj
             if(total_diff):
                 self.extras.append(LaneJoiner(total_diff, 'R'))
 
             # TODO: This will always eliminate rightmost lanes
             # Sometimes we might know that it's the left lane instead?
-            self.offset += lane_adj
+            self.offset = last_row.offset + lane_adj
 
     def render(self, fmt):
         pos = (
@@ -116,8 +118,11 @@ class Element:
     def get_relpos(self):
         return (self.row.offset, self.row.id)
 
-    def render_arc(self, relpos, pos, rot=0):
+    def render_arc(self, relpos, pos, rot=0, prefixes = []):
         g = self.dwg.g()
+        prefixes.append(g.get_id())
+        g.attribs['id'] = '_'.join(prefixes)
+
         path = self.dwg.path(d=('M',(relpos[0] + pos)*self.row.gs, relpos[1]*self.row.gs))
         path.push('c',
             0, self.bez_circle_dist*self.row.gs,
@@ -206,20 +211,23 @@ class Link(Element):
         self.side = side
 
 class Exit(Link):
-    def render(self, fmt, pos):
+    def render(self, fmt, idx):
         relpos = self.get_relpos()
         if(fmt == 'text'):
             return '╗' if self.side == 'L' else '╔'
         rot = 90 if self.side == 'L' else 0
-        return self.render_arc(relpos, pos, rot)
+        pos = -(idx+1) if self.side == 'L' else len(self.row.lanes) + idx
+        return self.render_arc(relpos, pos, rot, ['exit', self.side])
 
 class Entrance(Link):
-    def render(self, fmt, pos):
+    def render(self, fmt, idx):
         relpos = self.get_relpos()
         if(fmt == 'text'):
             return '╔' if self.side == 'L' else '╗'
         rot = 270 if self.side == 'L' else 180
-        return self.render_arc(relpos, pos, rot)
+        pos = -(idx+1) if self.side == 'L' else len(self.row.lanes) + idx
+        prefixes = ['entrance', self.side]
+        return self.render_arc(relpos, pos, rot, prefixes)
 
 class Label(Element):
     def __init__(self, text):
