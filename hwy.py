@@ -42,8 +42,7 @@ class HwySeg:
 
         self.prev = None
         self.next = None
-        self.exit = None
-        self.entrance = None
+        self.links = []
 
     def describe_link(self, trunk):
         fromto = 'to' if trunk.get_link_type(self) == 'exit' else 'from'
@@ -117,58 +116,47 @@ class HwySeg:
             else:
                 return 'L' if rel_ang > 0 else 'R'
 
-    def set_exit(self, link):
-        if(self.exit):
-            print(link.id)
-            print('Exit already assigned!')
-        else:
-            self.exit = link
+    def add_exit(self, link):
+        self.links.append(link)
 
-    def set_entrance(self, link):
-        if(self.entrance):
-            print(link.id)
-            print('Entrance already assigned!')
-        else:
-            self.entrance = link
+    def add_entrance(self, link):
+        self.links.append(link)
 
 
 class Hwy:
-    def __init__(self, name, start_idx, end_idx, pool):
+    def __init__(self, name, parent):
         self.name = name
-        self.start_idx = start_idx
-        self.end_idx = end_idx
 
         self.starts = []
         self.ends = []
-        self.pool = pool
+        self.parent = parent
 
     def add_seg(self, seg):
-        previd = nextid = None
-        if(seg.end in self.start_idx):
-            nextid = self.start_idx[seg.end]
-            seg.next = self.pool[nextid]
-        if(seg.start in self.end_idx):
-            previd = self.end_idx[seg.start]
-            seg.prev = self.pool[previd]
+        nextid = self.lookup(seg.end, 'start')
+        if(nextid):
+            seg.next = self.parent.segs.get(nextid)
+        previd = self.lookup(seg.start, 'end')
+        if(previd):
+            seg.prev = self.parent.segs.get(previd)
 
         if(previd and not nextid):
             self.ends.append(seg)
         elif(nextid and not previd):
             self.starts.append(seg)
 
-    def add_link(self, link):
-        if(link.start in self.start_idx):
-            self.pool[self.start_idx[link.start]].set_exit(link)
-        if(link.end in self.end_idx):
-            self.pool[self.end_idx[link.end]].set_entrance(link)
+        seg.links = self.parent.links.lookup_all(seg.nodes)
+
+    def lookup(self, seg_id, idx):
+        return self.parent.segs.lookup(seg_id, idx, self.name)
 
 class HwySet:
-    def __init__(self, segs):
+    def __init__(self, segs, links):
         self.hwys = {}
         self.segs = segs
+        self.links = links
 
-    def add_hwy(self, name, starts, ends):
-        self.hwys[name] = Hwy(name, starts, ends, self.segs)
+    def add_hwy(self, name):
+        self.hwys[name] = Hwy(name, self)
 
     def add_seg(self, seg):
         self.hwys[seg.name].add_seg(seg)
@@ -179,3 +167,48 @@ class HwySet:
 
     def get_hwy(self, name):
         return self.hwys[name]
+
+class SegIndex:
+    def __init__(self, segment_by = None):
+        self.segs = {}
+        self.idx = {
+            'start': {},
+            'end': {},
+        }
+        self.segment_by = segment_by
+
+    def get(self, id):
+        return self.segs[id]
+
+    def add(self, seg):
+        self.segs[seg.id] = seg
+
+        for cur_idx in self.idx:
+            if(self.segment_by):
+                segment_val = getattr(seg, self.segment_by)
+                if(segment_val not in self.idx[cur_idx]):
+                    self.idx[cur_idx][segment_val] = {}
+                self.idx[cur_idx][segment_val][getattr(seg, cur_idx)] = seg.id
+            else:
+                self.idx[cur_idx][getattr(seg, cur_idx)] = seg.id
+
+    def lookup(self, seg_id, idx, segment = None):
+        lookup = self.idx[idx]
+        if(segment):
+            lookup = lookup[segment]
+
+        if(seg_id in lookup):
+            return lookup[seg_id]
+        else:
+            return None
+
+    def lookup_all(self, seg_ids, segment = None):
+        matches = []
+        for seg_id in seg_ids:
+            for (type, cur_idx) in self.idx.items():
+                if(segment):
+                    cur_idx = cur_idx[segment]
+                if(seg_id in cur_idx):
+                    matches.append((type, cur_idx[seg_id]))
+
+        return matches
