@@ -84,14 +84,12 @@ class Row:
         else:
             g = self.dwg.g(id='row' + str(self.id))
 
-        cur_pos = self.offset
-        for l in self.lanes:
-            lane = l.render(fmt, cur_pos)
+        for (i, l) in enumerate(self.lanes):
+            lane = l.render(fmt, i)
             if(fmt == 'svg'):
                 g.add(lane)
             else:
                 row += lane
-            cur_pos += 1
 
         if(fmt == 'text'):
             right_links = [l.render('text', None) for l in self.links if l.side == 1]
