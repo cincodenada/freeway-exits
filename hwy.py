@@ -205,10 +205,11 @@ class SegIndex:
     def lookup_all(self, seg_ids, segment = None):
         matches = []
         for seg_id in seg_ids:
-            for (type, cur_idx) in self.idx.items():
+            for (idx_type, cur_idx) in self.idx.items():
+                link_type = 'exit' if idx_type == 'start' else 'entrance'
                 if(segment):
                     cur_idx = cur_idx[segment]
                 if(seg_id in cur_idx):
-                    matches.append((type, cur_idx[seg_id]))
+                    matches.append((link_type, cur_idx[seg_id]))
 
         return matches
