@@ -86,6 +86,8 @@ class HwySeg:
         elif((link.end in self.nodes) and (link.end != self.start)):
             return 'entrance'
         else:
+            print(link.start, link.end)
+            print(self.nodes)
             return None
 
     def get_rel_ang(self, link):
@@ -144,7 +146,11 @@ class Hwy:
         elif(nextid and not previd):
             self.starts.append(seg)
 
-        seg.links = self.parent.links.lookup_all(seg.nodes)
+        seg.links = []
+        for l in self.parent.links.lookup_all(seg.nodes):
+            link = self.parent.links.get(l[1])
+            if link.start != seg.end and link.end != seg.start:
+                seg.links.append(l)
 
     def lookup(self, seg_id, idx):
         return self.parent.segs.lookup(seg_id, idx, self.name)

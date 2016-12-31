@@ -46,33 +46,27 @@ for start in hwys.get_hwy('I 5').starts:
             if(len(curseg.links)):
                 for (type, link_id) in curseg.links:
                     link = links.get(link_id)
-                    is_left = (curseg.get_side(link) == 'L')
 
-                    # If we lost a lane and there's a left exit,
-                    # shift the lanes over 1 to make the leftmost lane an exit
-                    if(is_left and lastlanes > curseg.lanes):
-                        base_pos += 1
-                    text_adj = -2 if is_left else 0
-                    row = dwg.add_row(base_pos + text_adj)
+                    row = dwg.add_row()
                     for n in range(curseg.lanes):
-                        row.add_element(render.Lane())
+                        row.add_lane(render.Lane())
 
                     if(type == 'exit'):
-                        row.add_element(render.Exit(), is_left)
+                        row.add_link(render.Exit(curseg.get_side(link)))
                     else:
-                        row.add_element(render.Entrance(), is_left)
-                    row.add_element(render.Label(link.describe_link(curseg)), is_left)
+                        row.add_link(render.Entrance(curseg.get_side(link)))
+                    #row.add_link(render.Label(link.describe_link(curseg)))
 
                     # Update lastlanes for entrance rendering
                     lastlanes = curseg.lanes
             else:
-                row = dwg.add_row(base_pos)
+                row = dwg.add_row()
                 for n in range(curseg.lanes):
-                    row.add_element(render.Lane())
+                    row.add_lane(render.Lane())
 
         lastlanes = curseg.lanes
         curseg = curseg.next
-    dwg.add_row(0)
+    dwg.add_row()
 
 dwg.render('text')
 dwg.render()
