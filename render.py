@@ -42,20 +42,20 @@ class Row:
         if(last_row):
             lane_diff = len(self.lanes) - len(last_row.lanes)
             lane_adj = 0
+            for l in last_row.links:
+                if(isinstance(l, Entrance)):
+                    if(lane_diff > 0):
+                        lane_diff-=1
+                        if(l.side == 'L'):
+                            lane_adj += 1
             for l in self.links:
                 if(isinstance(l, Exit)):
                     if(lane_diff < 0):
                         lane_diff+=1
                         if(l.side == 'L'):
                             lane_adj += 1
-                elif(isinstance(l, Entrance)):
-                    if(lane_diff > 0):
-                        lane_diff-=1
-                        if(l.side == 'L'):
-                            lane_adj += 1
-            total_diff = lane_diff - lane_adj
-            if(total_diff):
-                self.extras.append(LaneJoiner(total_diff, 'R'))
+            if(lane_diff):
+                self.extras.append(LaneJoiner(lane_diff, 'R'))
 
             # TODO: This will always eliminate rightmost lanes
             # Sometimes we might know that it's the left lane instead?
@@ -70,7 +70,12 @@ class Row:
         if(fmt == 'text'):
             left_links = [l.render('text', None) for l in self.links if l.side == 'L']
             left_extras = [e.render('text', None) for e in self.extras if e.side == 'L']
-            row = ''.join(left_links) + ''.join(left_extras)
+
+            row = ''
+            num_left_things = len(left_links) + len(left_extras)
+            if(num_left_things < self.offset):
+                row += ' '*(self.offset - num_left_things)
+            row += ''.join(left_links) + ''.join(left_extras)
         else:
             g = self.dwg.g(id='row' + str(self.id))
 
