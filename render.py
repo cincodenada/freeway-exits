@@ -209,16 +209,17 @@ class Exit(Link):
     def render(self, fmt, pos):
         relpos = self.get_relpos()
         if(fmt == 'text'):
-            return '╗' if (pos == self.row.offset + 1) else '╔'
-        rot = 90 if (pos == self.row.offset + 1) else 0
+            return '╗' if self.side == 'L' else '╔'
+        rot = 90 if self.side == 'L' else 0
         return self.render_arc(relpos, pos, rot)
 
 class Entrance(Link):
     def render(self, fmt, pos):
         relpos = self.get_relpos()
         if(fmt == 'text'):
-            return '╔' if (pos == self.row.offset + 1) else '╗'
-        return self.render_arc(relpos, pos, 180)
+            return '╔' if self.side == 'L' else '╗'
+        rot = 270 if self.side == 'L' else 180
+        return self.render_arc(relpos, pos, rot)
 
 class Label(Element):
     def __init__(self, text):
