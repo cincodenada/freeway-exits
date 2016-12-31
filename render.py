@@ -6,7 +6,6 @@ class Diagram:
         self.gs = gridsize
         self.rows = []
         self.dwg = svgwrite.Drawing(filename='out.svg', debug=True)
-        self.cur_row = 0
 
     def render(self, fmt = 'svg'):
         cur_pos = 0
@@ -18,9 +17,8 @@ class Diagram:
         return self.dwg.save()
 
     def add_row(self, start_pos):
-        row = Row(self, self.cur_row, start_pos)
+        row = Row(self, len(self.rows), start_pos)
         self.rows.append(row)
-        self.cur_row =+ 1
         return row
 
 class Row:
