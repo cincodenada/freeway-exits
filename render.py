@@ -2,6 +2,8 @@ import svgwrite
 from svgwrite import mm
 from math import copysign
 
+sidename = {-1: 'L', 1: 'R'}
+
 class Diagram:
     def __init__(self, gridsize):
         self.gs = gridsize
@@ -12,6 +14,7 @@ class Diagram:
         cur_offset = 0
         last_row = None
         for r in self.rows:
+            r.flipped = True
             r.adjust_offset(last_row)
             row = r.render(fmt)
             if(fmt == 'text'):
@@ -46,16 +49,18 @@ class Row:
                 if(isinstance(l, Entrance)):
                     if(lane_diff > 0):
                         lane_diff-=1
-                        if(l.side == 'L'):
+                        if(l.side == -1):
                             lane_adj += 1
             for l in self.links:
                 if(isinstance(l, Exit)):
                     if(lane_diff < 0):
                         lane_diff+=1
-                        if(l.side == 'L'):
+                        if(l.side == -1):
                             lane_adj += 1
             if(lane_diff):
-                self.extras.append(LaneJoiner(lane_diff, 'R'))
+                lj = LaneJoiner(lane_diff, 1)
+                lj.set_row(self)
+                self.extras.append(lj)
 
             # TODO: This will always eliminate rightmost lanes
             # Sometimes we might know that it's the left lane instead?
@@ -68,8 +73,8 @@ class Row:
         )
 
         if(fmt == 'text'):
-            left_links = [l.render('text', None) for l in self.links if l.side == 'L']
-            left_extras = [e.render('text', None) for e in self.extras if e.side == 'L']
+            left_links = [l.render('text', None) for l in self.links if l.side == -1]
+            left_extras = [e.render('text', None) for e in self.extras if e.side == -1]
 
             row = ''
             num_left_things = len(left_links) + len(left_extras)
@@ -89,12 +94,12 @@ class Row:
             cur_pos += 1
 
         if(fmt == 'text'):
-            right_links = [l.render('text', None) for l in self.links if l.side == 'R']
-            right_extras = [e.render('text', None) for e in self.extras if e.side == 'R']
+            right_links = [l.render('text', None) for l in self.links if l.side == 1]
+            right_extras = [e.render('text', None) for e in self.extras if e.side == 1]
             row += ''.join(right_extras) + ''.join(right_links)
             return row
         else:
-            counts = {'L': 0, 'R': 0}
+            counts = {-1: 0, 1: 0}
             for e in self.extras:
                 e.set_row(self)
                 g.add(e.render(fmt, counts[e.side]))
@@ -119,6 +124,12 @@ class Element:
     def set_row(self, row):
         self.row = row
         self.dwg = row.dwg
+
+    def get_flip(self):
+        return -1 if self.row.flipped else 1
+
+    def get_flipside(self):
+        return self.side * self.get_flip()
 
     def get_relpos(self):
         return (self.row.offset, self.row.id)
@@ -219,19 +230,25 @@ class Exit(Link):
     def render(self, fmt, idx):
         relpos = self.get_relpos()
         if(fmt == 'text'):
-            return '╗' if self.side == 'L' else '╔'
-        rot = 90 if self.side == 'L' else 0
-        pos = -(idx+1) if self.side == 'L' else len(self.row.lanes) + idx
-        return self.render_arc(relpos, pos, rot, ['exit', self.side])
+            return '╗' if self.get_flipside() == -1 else '╔'
+        if(self.row.flipped):
+            rot = 90 if self.side == -1 else 180
+        else:
+            rot = 0 if self.side == -1 else 270
+        pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
+        return self.render_arc(relpos, pos, rot, ['exit', sidename[self.side]])
 
 class Entrance(Link):
     def render(self, fmt, idx):
         relpos = self.get_relpos()
         if(fmt == 'text'):
-            return '╔' if self.side == 'L' else '╗'
-        rot = 270 if self.side == 'L' else 180
-        pos = -(idx+1) if self.side == 'L' else len(self.row.lanes) + idx
-        prefixes = ['entrance', self.side]
+            return '╔' if self.get_flipside() == -1 else '╗'
+        if(self.row.flipped):
+            rot = 0 if self.side == -1 else 270
+        else:
+            rot = 90 if self.side == -1 else 180
+        pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
+        prefixes = ['entrance', sidename[self.side]]
         return self.render_arc(relpos, pos, rot, prefixes)
 
 class Label(Element):
@@ -261,11 +278,10 @@ class LaneJoiner(Element):
         self.diff = diff
         self.direction = copysign(1, diff) # Reduction = -1, Addition = 1
         self.side = side
-        self.side_num = -1 if(side == 'L') else 1
 
     def render(self, fmt, pos):
         if(fmt == 'text'):
             lines = '-'*(abs(self.diff)-1)
-            return '\\' + lines if(self.direction == self.side_num) else lines + '/'
+            return '/' + lines if(self.direction == self.get_flipside()) else lines + '\\'
         else:
             return self.row.dwg.g()

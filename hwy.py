@@ -114,9 +114,9 @@ class HwySeg:
         else:
             rel_ang = self.get_rel_ang(link)
             if(type == 'exit'):
-                return 'R' if rel_ang > 0 else 'L'
+                return 1 if rel_ang > 0 else -1
             else:
-                return 'L' if rel_ang > 0 else 'R'
+                return -1 if rel_ang > 0 else 1
 
     def add_exit(self, link):
         self.links.append(link)
