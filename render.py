@@ -11,7 +11,7 @@ class Diagram:
         cur_pos = 0
         for r in self.rows:
             r.render(fmt, (0, cur_pos))
-            cur_pos += self.gs
+            cur_pos += 1
 
     def save(self):
         return self.dwg.save()
@@ -62,9 +62,9 @@ class Element:
 
     def render_arc(self, relpos, pos, rot=0):
         g = self.dwg.g()
-        path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs), relpos[1]))
+        path = self.dwg.path(d=('M',(relpos[0] + pos)*self.row.gs, relpos[1]*self.row.gs))
         path.push('c',
-            0, (self.bez_circle_dist*self.row.gs),
+            0, self.bez_circle_dist*self.row.gs,
             (1 - self.bez_circle_dist)*self.row.gs, self.row.gs,
             self.row.gs, self.row.gs
         )
@@ -72,7 +72,7 @@ class Element:
         path.push('l', -self.row.gs, 0)
         path.fill(color='gray')
         g.add(path)
-        path = self.dwg.path(d=('M',(relpos[0] + pos*self.row.gs), relpos[1]))
+        path = self.dwg.path(d=('M',(relpos[0] + pos)*self.row.gs, relpos[1]*self.row.gs))
         path.push('c',
             0, (self.bez_circle_dist*self.row.gs),
             (1 - self.bez_circle_dist)*self.row.gs, self.row.gs,
@@ -81,7 +81,7 @@ class Element:
         path.fill(opacity=0)
         path.stroke(color='black',width=1)
         g.add(path)
-        g.rotate(rot, (relpos[0] + (pos+0.5)*self.row.gs, relpos[1] + 0.5*self.row.gs))
+        g.rotate(rot, ((relpos[0] + pos+0.5)*self.row.gs, (relpos[1] + 0.5)*self.row.gs))
         return g
 
 class Lane(Element):
@@ -101,8 +101,8 @@ class Lane(Element):
         g = self.dwg.g()
         g.add(self.dwg.rect(
             insert=(
-                (relpos[0] + pos*self.row.gs),
-                relpos[1]
+                (relpos[0] + pos)*self.row.gs,
+                relpos[1]*self.row.gs
             ),
             size=(
                 self.row.gs,
@@ -113,12 +113,12 @@ class Lane(Element):
 
         left_side = self.dwg.line(
             start=(
-                (relpos[0] + pos*self.row.gs),
-                relpos[1]
+                (relpos[0] + pos)*self.row.gs,
+                relpos[1]*self.row.gs
             ),
             end=(
-                (relpos[0] + pos*self.row.gs),
-                (relpos[1] + self.row.gs)
+                (relpos[0] + pos)*self.row.gs,
+                (relpos[1] + 1)*self.row.gs
             ),
             stroke='black',
             stroke_width=1
@@ -129,12 +129,12 @@ class Lane(Element):
 
         right_side = self.dwg.line(
             start=(
-                (relpos[0] + (pos+1)*self.row.gs),
-                relpos[1]
+                (relpos[0] + (pos+1))*self.row.gs,
+                relpos[1]*self.row.gs
             ),
             end=(
-                (relpos[0] + (pos+1)*self.row.gs),
-                (relpos[1] + self.row.gs)
+                (relpos[0] + (pos+1))*self.row.gs,
+                (relpos[1] + 1)*self.row.gs
             ),
             stroke='black',
             stroke_width=1
@@ -171,8 +171,8 @@ class Label(Element):
         #TODO: Figure out a baseline to center this vertically as well
         return self.dwg.text(self.text,
             insert=(
-                (relpos[0] + our_pos*self.row.gs),
-                (relpos[1] + self.row.gs*0.5)
+                (relpos[0] + our_pos)*self.row.gs,
+                (relpos[1] + 0.5)*self.row.gs
             ),
             text_anchor=anchor
         )
