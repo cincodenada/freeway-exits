@@ -121,12 +121,14 @@ class Diagram:
     def render(self, fmt = 'svg'):
         cur_offset = 0
         last_row = None
-        for r in self.rows:
+        for idx in range(len(self.rows)):
+            r = self.rows[idx]
             r.flipped = True
-            r.adjust_offset(last_row)
-            last_row = r
+            try:
+                self.rows[idx+1].adjust_offset(r)
+            except IndexError:
+                pass
 
-        for r in self.rows:
             row = r.render(fmt)
             if(fmt == 'text'):
                 print(row)
