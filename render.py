@@ -143,6 +143,7 @@ class Row:
         self.lanes = []
         self.links = []
         self.extras = []
+        self.caps = []
         self.offset = 0
         self.dwg = drawing.dwg
         self.gs = drawing.gs
@@ -158,9 +159,10 @@ class Row:
                         lane_diff-=1
                         if(l.side == -1):
                             lane_adj += 1
-            for l in self.links:
+            for (idx, l) in enumerate(self.links):
                 if(isinstance(l, Exit)):
                     if(lane_diff < 0):
+                        self.caps.append(idx)
                         lane_diff+=1
                         if(l.side == -1):
                             lane_adj += 1
@@ -209,9 +211,9 @@ class Row:
                 e.set_row(self)
                 g.add(e.render(fmt, counts[e.side]))
                 counts[e.side] += 1
-            for l in self.links:
+            for (idx, l) in enumerate(self.links):
                 l.set_row(self)
-                g.add(l.render(fmt, counts[l.side]))
+                g.add(l.render(fmt, counts[l.side], (idx in self.caps)))
                 counts[l.side] += 1
 
             return g
@@ -312,7 +314,7 @@ class Link(Element):
         self.side = side
 
 class Exit(Link):
-    def render(self, fmt, idx):
+    def render(self, fmt, idx, is_cap = False):
         relpos = self.get_relpos()
         if(fmt == 'text'):
             return '╗' if self.get_flipside() == -1 else '╔'
@@ -323,13 +325,13 @@ class Exit(Link):
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
         return self.get_symbol(
-            'exit_' + sidename[self.side],
+            'exit_' + ('cap_' if is_cap else '') + sidename[self.side],
             relpos, pos,
             ['exit', sidename[self.side]]
         )
 
 class Entrance(Link):
-    def render(self, fmt, idx):
+    def render(self, fmt, idx, is_cap = False):
         relpos = self.get_relpos()
         if(fmt == 'text'):
             return '╔' if self.get_flipside() == -1 else '╗'
@@ -340,7 +342,7 @@ class Entrance(Link):
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
         return self.get_symbol(
-            'entrance_' + sidename[self.side],
+            'entrance_' + ('cap_' if is_cap else '') + sidename[self.side],
             relpos, pos,
             ['entrance', sidename[self.side]]
         )
