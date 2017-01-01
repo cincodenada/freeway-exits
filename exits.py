@@ -20,6 +20,12 @@ for n in root.iter('node'):
 
 print("Getting ways...")
 for way in root.iter('way'):
+    try:
+        if(way.find("./tag[@k='oneway']").get('v') != 'yes'):
+            continue
+    except AttributeError:
+        continue
+
     seg = HwySeg(way, nodes)
 
     if(seg.type == 'motorway'):
