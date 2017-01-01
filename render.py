@@ -12,7 +12,7 @@ class Diagram:
         self.dwg = svgwrite.Drawing(filename='out.svg', debug=True)
 
         # Create defs
-        ramp_radius = 0.333
+        ramp_radius = 0.25
 
         exit_r = self.dwg.symbol(id="exit_R")
         exit_r.add(self.make_ramp(ramp_radius, False, False))
@@ -32,14 +32,14 @@ class Diagram:
 
     def make_ramp(self, ramp_radius, flipx=False, flipy=False):
         g = self.dwg.g()
-        ramp_path = self.dwg.path(d=('M',0,-ramp_radius))
+        ramp_path = self.dwg.path(d=('M',0,0))
         ramp_path.push('c',
             0, ramp_radius*self.bez_circle_dist,
             ramp_radius*(1-self.bez_circle_dist), ramp_radius,
             ramp_radius, ramp_radius
         )
         ramp_path.push('l', 1-ramp_radius, 0)
-        ramp_path.push('l', 0, 1)
+        ramp_path.push('l', 0, 1-ramp_radius)
         ramp_path.push('l', -(1-ramp_radius), 0)
         ramp_path.push('c',
             -ramp_radius*self.bez_circle_dist, 0,
@@ -49,14 +49,14 @@ class Diagram:
         ramp_path.fill(color='gray')
         g.add(ramp_path)
 
-        ramp_outline = self.dwg.path(d=('M',0,-ramp_radius))
+        ramp_outline = self.dwg.path(d=('M',0,0))
         ramp_outline.push('c',
             0, ramp_radius*self.bez_circle_dist,
             ramp_radius*(1-self.bez_circle_dist), ramp_radius,
             ramp_radius, ramp_radius
         )
         ramp_outline.push('l', 1-ramp_radius, 0)
-        ramp_outline.push('m', 0, 1)
+        ramp_outline.push('m', 0, 1-ramp_radius)
         ramp_outline.push('l', -(1-ramp_radius), 0)
         ramp_outline.push('c',
             -ramp_radius*self.bez_circle_dist, 0,
