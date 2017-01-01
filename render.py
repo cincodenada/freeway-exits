@@ -263,8 +263,16 @@ class Lane(Element):
             return 1 # Rightmost
 
     def render(self, fmt, pos):
+        edge = self.edge(pos)
+
         if(fmt == 'text'):
-            return '║'
+            if(edge == -1):
+                return '┨┆'
+            elif(edge == 1):
+                return '┠'
+            else:
+                return '┆'
+
 
         relpos = self.get_relpos()
         g = self.dwg.g()
@@ -292,7 +300,7 @@ class Lane(Element):
             stroke='black',
             stroke_width=1
         )
-        if(self.edge(pos) != -1):
+        if(edge != -1):
             left_side.dasharray([2,2])
         g.add(left_side)
 
@@ -308,7 +316,7 @@ class Lane(Element):
             stroke='black',
             stroke_width=1
         )
-        if(self.edge(pos) != 1):
+        if(edge != 1):
             right_side.dasharray([2,2])
         g.add(right_side)
         return g
