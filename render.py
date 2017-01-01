@@ -123,12 +123,14 @@ class Diagram:
         for r in self.rows:
             r.flipped = True
             r.adjust_offset(last_row)
+            last_row = r
+
+        for r in self.rows:
             row = r.render(fmt)
             if(fmt == 'text'):
                 print(row)
             else:
                 self.dwg.add(row)
-            last_row = r
 
     def save(self):
         return self.dwg.save()
@@ -168,9 +170,10 @@ class Row:
                         if(l.side == -1):
                             lane_adj += 1
             if(lane_diff):
+                rel_row = self if lane_diff < 0 else last_row
                 lj = LaneJoiner(lane_diff, 1)
-                lj.set_row(self)
-                self.extras.append(lj)
+                lj.set_row(rel_row)
+                rel_row.extras.append(lj)
 
             # TODO: This will always eliminate rightmost lanes
             # Sometimes we might know that it's the left lane instead?
