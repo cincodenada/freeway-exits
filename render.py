@@ -259,7 +259,7 @@ class Lane(Element):
         self.type = type
 
     def edge(self, pos):
-        if(pos == self.row.offset):
+        if(pos == 0):
             return -1 # Leftmost
         elif(pos == len(self.row.lanes) - 1):
             return 1 # Rightmost
