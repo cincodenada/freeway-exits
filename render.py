@@ -348,15 +348,16 @@ class Entrance(Link):
         )
 
 class Label(Element):
-    def __init__(self, side, text):
+    def __init__(self, side, type, text):
         self.side = side
         self.text = text
+        self.type = type
 
     def render(self, fmt, idx, is_cap = False):
         relpos = self.get_relpos()
 
         if(fmt == 'text'):
-            return '*' if(self.side == -1) else self.text
+            return ('->' if self.type=='exit' else '<-') + self.text
 
         anchor = 'end' if(self.side == -1) else 'start'
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
