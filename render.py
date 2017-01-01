@@ -5,10 +5,73 @@ from math import copysign
 sidename = {-1: 'L', 1: 'R'}
 
 class Diagram:
+    bez_circle_dist = 0.551915024494
     def __init__(self, gridsize):
         self.gs = gridsize
         self.rows = []
         self.dwg = svgwrite.Drawing(filename='out.svg', debug=True)
+
+        # Create defs
+        ramp_radius = 0.333
+
+        exit_r = self.dwg.symbol(id="exit_R")
+        exit_r.add(self.make_ramp(ramp_radius, False, False))
+        self.dwg.defs.add(exit_r)
+
+        entrance_r = self.dwg.symbol(id="entrance_R")
+        entrance_r.add(self.make_ramp(ramp_radius, False, True))
+        self.dwg.defs.add(entrance_r)
+
+        exit_l = self.dwg.symbol(id="exit_L")
+        exit_l.add(self.make_ramp(ramp_radius, True, False))
+        self.dwg.defs.add(exit_l)
+
+        entrance_l = self.dwg.symbol(id="entrance_L")
+        entrance_l.add(self.make_ramp(ramp_radius, True, True))
+        self.dwg.defs.add(entrance_l)
+
+    def make_ramp(self, ramp_radius, flipx=False, flipy=False):
+        g = self.dwg.g()
+        ramp_path = self.dwg.path(d=('M',0,-ramp_radius))
+        ramp_path.push('c',
+            0, ramp_radius*self.bez_circle_dist,
+            ramp_radius*(1-self.bez_circle_dist), ramp_radius,
+            ramp_radius, ramp_radius
+        )
+        ramp_path.push('l', 1-ramp_radius, 0)
+        ramp_path.push('l', 0, 1)
+        ramp_path.push('l', -(1-ramp_radius), 0)
+        ramp_path.push('c',
+            -ramp_radius*self.bez_circle_dist, 0,
+            -ramp_radius, -ramp_radius*(1-self.bez_circle_dist),
+            -ramp_radius, -ramp_radius
+        )
+        ramp_path.fill(color='gray')
+        g.add(ramp_path)
+
+        ramp_outline = self.dwg.path(d=('M',0,-ramp_radius))
+        ramp_outline.push('c',
+            0, ramp_radius*self.bez_circle_dist,
+            ramp_radius*(1-self.bez_circle_dist), ramp_radius,
+            ramp_radius, ramp_radius
+        )
+        ramp_outline.push('l', 1-ramp_radius, 0)
+        ramp_outline.push('m', 0, 1)
+        ramp_outline.push('l', -(1-ramp_radius), 0)
+        ramp_outline.push('c',
+            -ramp_radius*self.bez_circle_dist, 0,
+            -ramp_radius, -ramp_radius*(1-self.bez_circle_dist),
+            -ramp_radius, -ramp_radius
+        )
+        ramp_outline.stroke(color='black',width=0.05)
+        ramp_outline.fill(opacity=0)
+        g.add(ramp_outline)
+
+        g.scale((-1 if flipx else 1, -1 if flipy else 1))
+        g.translate((-1 if flipx else 0, -1 if flipy else 0))
+
+        return g
+
 
     def render(self, fmt = 'svg'):
         cur_offset = 0
@@ -234,7 +297,12 @@ class Exit(Link):
         else:
             rot = 0 if self.side == -1 else 270
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
-        return self.render_arc(relpos, pos, rot, ['exit', sidename[self.side]])
+        prefixes = ['exit', sidename[self.side]]
+        ramp = self.dwg.use('#exit_' + sidename[self.side], (relpos[0]+pos, relpos[1]))
+        ramp.scale(self.row.gs)
+        prefixes.append(ramp.get_id())
+        ramp.attribs['id'] = '_'.join(prefixes)
+        return ramp
 
 class Entrance(Link):
     def render(self, fmt, idx):
@@ -247,7 +315,11 @@ class Entrance(Link):
             rot = 90 if self.side == -1 else 180
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
         prefixes = ['entrance', sidename[self.side]]
-        return self.render_arc(relpos, pos, rot, prefixes)
+        ramp = self.dwg.use('#entrance_' + sidename[self.side], (relpos[0]+pos, relpos[1]))
+        ramp.scale(self.row.gs)
+        prefixes.append(ramp.get_id())
+        ramp.attribs['id'] = '_'.join(prefixes)
+        return ramp
 
 class Label(Element):
     def __init__(self, text):
