@@ -30,6 +30,22 @@ class Diagram:
         entrance_l.add(self.make_ramp(ramp_radius, True, True))
         self.dwg.defs.add(entrance_l)
 
+        exit_cap_r = self.dwg.symbol(id="exit_cap_R")
+        exit_cap_r.add(self.make_lane_end(False, False))
+        self.dwg.defs.add(exit_cap_r)
+
+        entrance_cap_r = self.dwg.symbol(id="entrance_cap_R")
+        entrance_cap_r.add(self.make_lane_end(False, True))
+        self.dwg.defs.add(entrance_cap_r)
+
+        exit_cap_l = self.dwg.symbol(id="exit_cap_L")
+        exit_cap_l.add(self.make_lane_end(True, False))
+        self.dwg.defs.add(exit_cap_l)
+
+        entrance_cap_l = self.dwg.symbol(id="entrance_cap_L")
+        entrance_cap_l.add(self.make_lane_end(True, True))
+        self.dwg.defs.add(entrance_cap_l)
+
     def make_ramp(self, ramp_radius, flipx=False, flipy=False):
         g = self.dwg.g()
         ramp_path = self.dwg.path(d=('M',0,0))
@@ -66,6 +82,34 @@ class Diagram:
         ramp_outline.stroke(color='black',width=0.05)
         ramp_outline.fill(opacity=0)
         g.add(ramp_outline)
+
+        g.scale((-1 if flipx else 1, -1 if flipy else 1))
+        g.translate((-1 if flipx else 0, -1 if flipy else 0))
+
+        return g
+
+    def make_lane_end(self, flipx=False, flipy=False):
+        g = self.dwg.g()
+
+        path = self.dwg.path(d=('M',0,0))
+        path.push('c',
+            0, self.bez_circle_dist,
+            (1 - self.bez_circle_dist), 1,
+            1, 1
+        )
+        path.push('l', 0, -1)
+        path.push('l', -1, 0)
+        path.fill(color='gray')
+        g.add(path)
+        path = self.dwg.path(d=('M',0,0))
+        path.push('c',
+            0, self.bez_circle_dist,
+            1 - self.bez_circle_dist, 1,
+            1, 1
+        )
+        path.fill(opacity=0)
+        path.stroke(color='black',width=0.05)
+        g.add(path)
 
         g.scale((-1 if flipx else 1, -1 if flipy else 1))
         g.translate((-1 if flipx else 0, -1 if flipy else 0))
@@ -195,32 +239,12 @@ class Element:
     def get_relpos(self):
         return (self.row.offset, self.row.id)
 
-    def render_arc(self, relpos, pos, rot=0, prefixes = []):
-        g = self.dwg.g()
-        prefixes.append(g.get_id())
-        g.attribs['id'] = '_'.join(prefixes)
-
-        path = self.dwg.path(d=('M',(relpos[0] + pos)*self.row.gs, relpos[1]*self.row.gs))
-        path.push('c',
-            0, self.bez_circle_dist*self.row.gs,
-            (1 - self.bez_circle_dist)*self.row.gs, self.row.gs,
-            self.row.gs, self.row.gs
-        )
-        path.push('l', 0, -self.row.gs)
-        path.push('l', -self.row.gs, 0)
-        path.fill(color='gray')
-        g.add(path)
-        path = self.dwg.path(d=('M',(relpos[0] + pos)*self.row.gs, relpos[1]*self.row.gs))
-        path.push('c',
-            0, (self.bez_circle_dist*self.row.gs),
-            (1 - self.bez_circle_dist)*self.row.gs, self.row.gs,
-            self.row.gs, self.row.gs
-        )
-        path.fill(opacity=0)
-        path.stroke(color='black',width=1)
-        g.add(path)
-        g.rotate(rot, ((relpos[0] + pos+0.5)*self.row.gs, (relpos[1] + 0.5)*self.row.gs))
-        return g
+    def get_symbol(self, id, relpos, pos, prefixes = []):
+        sym = self.dwg.use('#' + id, (relpos[0]+pos, relpos[1]))
+        sym.scale(self.row.gs)
+        prefixes.append(sym.get_id())
+        sym.attribs['id'] = '_'.join(prefixes)
+        return sym
 
 class Lane(Element):
     def __init__(self, type = None):
@@ -297,12 +321,12 @@ class Exit(Link):
         else:
             rot = 0 if self.side == -1 else 270
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
-        prefixes = ['exit', sidename[self.side]]
-        ramp = self.dwg.use('#exit_' + sidename[self.side], (relpos[0]+pos, relpos[1]))
-        ramp.scale(self.row.gs)
-        prefixes.append(ramp.get_id())
-        ramp.attribs['id'] = '_'.join(prefixes)
-        return ramp
+
+        return self.get_symbol(
+            'exit_' + sidename[self.side],
+            relpos, pos,
+            ['exit', sidename[self.side]]
+        )
 
 class Entrance(Link):
     def render(self, fmt, idx):
@@ -314,12 +338,12 @@ class Entrance(Link):
         else:
             rot = 90 if self.side == -1 else 180
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
-        prefixes = ['entrance', sidename[self.side]]
-        ramp = self.dwg.use('#entrance_' + sidename[self.side], (relpos[0]+pos, relpos[1]))
-        ramp.scale(self.row.gs)
-        prefixes.append(ramp.get_id())
-        ramp.attribs['id'] = '_'.join(prefixes)
-        return ramp
+
+        return self.get_symbol(
+            'entrance_' + sidename[self.side],
+            relpos, pos,
+            ['entrance', sidename[self.side]]
+        )
 
 class Label(Element):
     def __init__(self, text):
