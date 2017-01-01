@@ -31,6 +31,9 @@ class HwySeg:
         self.type = self.get_tag('highway')
         self.dest = self.get_tag('destination')
 
+        self.add_lanes = 0
+        self.remove_lanes = 0
+
         try:
             self.lanes = int(self.get_tag('lanes'))
         except (TypeError, ValueError):
