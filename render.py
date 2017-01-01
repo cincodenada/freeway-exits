@@ -153,9 +153,10 @@ class Row:
         if(last_row):
             lane_diff = len(self.lanes) - len(last_row.lanes)
             lane_adj = 0
-            for l in last_row.links:
+            for (idx, l) in enumerate(last_row.links):
                 if(isinstance(l, Entrance)):
                     if(lane_diff > 0):
+                        last_row.caps.append(idx)
                         lane_diff-=1
                         if(l.side == -1):
                             lane_adj += 1
