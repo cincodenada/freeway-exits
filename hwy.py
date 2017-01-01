@@ -136,28 +136,10 @@ class Hwy:
     def add_seg(self, seg):
         nextid = self.lookup(seg.end, 'start')
         if(nextid):
-            next_seg = self.parent.segs.get(nextid)
-            if(isinstance(next_seg, list)):
-                if(len(next_seg) > 2):
-                    raise ValueError("Too many highways!")
-                next_seg.sort(key = lambda h: h.lanes)
-                next_seg[0].discard = True
-                next_seg[1].add_lanes = next_seg[0].lanes
-                seg.next = next_seg[1]
-            else:
-                seg.next = next_seg
+            seg.next = self.parent.segs.get(nextid)
         previd = self.lookup(seg.start, 'end')
         if(previd):
-            prev_seg = self.parent.segs.get(previd)
-            if(isinstance(prev_seg, list)):
-                if(len(prev_seg) > 2):
-                    raise ValueError("Too many highways!")
-                prev_seg.sort(key = lambda h: h.lanes)
-                prev_seg[0].discard = True
-                prev_seg[1].remove_lanes = prev_seg[0].lanes
-                seg.prev = prev_seg[1]
-            else:
-                seg.prev = prev_seg
+            seg.prev = self.parent.segs.get(previd)
 
         if(previd and not nextid):
             self.ends.append(seg)
@@ -217,11 +199,20 @@ class SegIndex:
                 cur_list = self.idx[cur_idx]
 
             try:
-                curval = cur_list[getattr(seg, cur_idx)]
-                if(not isinstance(curval, list)):
-                    curval = [curval]
-                curval.append(seg.id)
-                cur_list[getattr(seg, cur_idx)] = curval
+                prevseg = self.get(cur_list[getattr(seg, cur_idx)])
+                if(seg.lanes > prevseg.lanes)
+                    prevseg.discard = True
+                    cur_list[getattr(seg, cur_idx)] = seg
+                    if(cur_idx == 'start'):
+                        seg.add_lanes = prevseg.lanes + prevseg.add_lanes
+                    else:
+                        seg.remove_lanes = prevseg.lanes + prevseg.remove_lanes
+                else:
+                    seg.discard = True
+                    if(cur_idx == 'start'):
+                        prevseg.add_lanes += seg.lanes
+                    else:
+                        prevseg.remove_lanes += seg.lanes
             except KeyError:
                 cur_list[getattr(seg, cur_idx)] = seg.id
 
