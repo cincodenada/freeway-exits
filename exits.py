@@ -50,7 +50,6 @@ for start in hwys.get_hwy('I 5').starts:
     base_pos = 0
     while curseg.next:
         extra_lanes += curseg.add_lanes
-        extra_lanes -= curseg.remove_lanes
         curlanes = curseg.lanes + extra_lanes
         if(lastlanes != curlanes or len(curseg.links)):
             if(len(curseg.links)):
@@ -76,6 +75,7 @@ for start in hwys.get_hwy('I 5').starts:
                     row.add_lane(render.Lane())
 
         lastlanes = curlanes
+        extra_lanes -= curseg.remove_lanes
         curseg = curseg.next
     dwg.add_row()
 
