@@ -136,10 +136,28 @@ class Hwy:
     def add_seg(self, seg):
         nextid = self.lookup(seg.end, 'start')
         if(nextid):
-            seg.next = self.parent.segs.get(nextid)
+            next_seg = self.parent.segs.get(nextid)
+            if(isinstance(next_seg, list)):
+                if(len(next_seg) > 2):
+                    raise ValueError("Too many highways!")
+                next_seg.sort(key = lambda h: h.lanes)
+                next_seg[0].discard = True
+                next_seg[1].add_lanes = next_seg[0].lanes
+                seg.next = next_seg[1]
+            else:
+                seg.next = next_seg
         previd = self.lookup(seg.start, 'end')
         if(previd):
-            seg.prev = self.parent.segs.get(previd)
+            prev_seg = self.parent.segs.get(previd)
+            if(isinstance(prev_seg, list)):
+                if(len(prev_seg) > 2):
+                    raise ValueError("Too many highways!")
+                prev_seg.sort(key = lambda h: h.lanes)
+                prev_seg[0].discard = True
+                prev_seg[1].remove_lanes = prev_seg[0].lanes
+                seg.prev = prev_seg[1]
+            else:
+                seg.prev = prev_seg
 
         if(previd and not nextid):
             self.ends.append(seg)
@@ -194,9 +212,18 @@ class SegIndex:
                 segment_val = getattr(seg, self.segment_by)
                 if(segment_val not in self.idx[cur_idx]):
                     self.idx[cur_idx][segment_val] = {}
-                self.idx[cur_idx][segment_val][getattr(seg, cur_idx)] = seg.id
+                cur_list = self.idx[cur_idx][segment_val]
             else:
-                self.idx[cur_idx][getattr(seg, cur_idx)] = seg.id
+                cur_list = self.idx[cur_idx]
+
+            try:
+                curval = cur_list[getattr(seg, cur_idx)]
+                if(not isinstance(curval, list)):
+                    curval = [curval]
+                curval.append(seg.id)
+                cur_list[getattr(seg, cur_idx)] = curval
+            except KeyError:
+                cur_list[getattr(seg, cur_idx)] = seg.id
 
     def lookup(self, seg_id, idx, segment = None):
         lookup = self.idx[idx]
