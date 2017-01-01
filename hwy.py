@@ -213,9 +213,9 @@ class SegIndex:
         for node_id in node_ids:
             for (idx_type, cur_idx) in self.idx.items():
                 link_type = 'exit' if idx_type == 'start' else 'entrance'
-                if(segment):
-                    cur_idx = cur_idx[segment]
-                if(node_id in cur_idx):
-                    matches.append((link_type, cur_idx[node_id]))
+
+                seg_id = self.lookup(node_id, idx_type, segment)
+                if(seg_id):
+                    matches.append((link_type, seg_id))
 
         return matches
