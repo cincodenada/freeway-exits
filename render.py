@@ -194,7 +194,7 @@ class Row:
             left_extras = [e.render('text', None) for e in self.extras if e.side == -1]
 
             num_left_things = len(left_links) + len(left_extras)
-            row = ' '*(self.text_buffer - num_left_things)
+            row = ' '*(self.text_buffer + self.offset - num_left_things)
             row += ''.join(left_links) + ''.join(left_extras)
         else:
             g = self.dwg.g(id='row' + str(self.id))
