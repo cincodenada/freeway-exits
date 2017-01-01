@@ -182,7 +182,7 @@ class Row:
         )
 
         if(fmt == 'text'):
-            left_links = [l.render('text', None) for l in self.links if l.side == -1]
+            left_links = [l.render('text', None) for l in self.links if l.side == -1 and not isinstance(l, Label)]
             left_extras = [e.render('text', None) for e in self.extras if e.side == -1]
 
             row = ''
@@ -201,7 +201,7 @@ class Row:
                 row += lane
 
         if(fmt == 'text'):
-            right_links = [l.render('text', None) for l in self.links if l.side == 1]
+            right_links = [l.render('text', None) for l in self.links if l.side == 1 or isinstance(l, Label)]
             right_extras = [e.render('text', None) for e in self.extras if e.side == 1]
             row += ''.join(right_extras) + ''.join(right_links)
             return row
@@ -348,17 +348,19 @@ class Entrance(Link):
         )
 
 class Label(Element):
-    def __init__(self, text):
+    def __init__(self, side, text):
+        self.side = side
         self.text = text
 
-    def render(self, fmt, pos):
+    def render(self, fmt, idx, is_cap = False):
         relpos = self.get_relpos()
 
-        is_left = (pos == self.row.offset)
         if(fmt == 'text'):
-            return '*' if(is_left) else self.text
-        anchor = 'end' if is_left else 'start'
-        our_pos = (pos+1) if is_left else pos
+            return '*' if(self.side == -1) else self.text
+
+        anchor = 'end' if(self.side == -1) else 'start'
+        pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
+        our_pos = (pos+1) if(self.side == -1) else pos
 
         #TODO: Figure out a baseline to center this vertically as well
         return self.dwg.text(self.text,

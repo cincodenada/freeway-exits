@@ -46,16 +46,17 @@ for start in hwys.get_hwy('I 5').starts:
             if(len(curseg.links)):
                 for (type, link_id) in curseg.links:
                     link = links.get(link_id)
+                    side = curseg.get_side(link)
 
                     row = dwg.add_row()
                     for n in range(curseg.lanes):
                         row.add_lane(render.Lane())
 
                     if(type == 'exit'):
-                        row.add_link(render.Exit(curseg.get_side(link)))
+                        row.add_link(render.Exit(side))
                     else:
-                        row.add_link(render.Entrance(curseg.get_side(link)))
-                    #row.add_link(render.Label(link.describe_link(curseg)))
+                        row.add_link(render.Entrance(side))
+                    row.add_link(render.Label(side, link.describe_link(curseg)))
 
                     # Update lastlanes for entrance rendering
                     lastlanes = curseg.lanes
