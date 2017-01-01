@@ -6,6 +6,7 @@ sidename = {-1: 'L', 1: 'R'}
 
 class Diagram:
     bez_circle_dist = 0.551915024494
+    text_buffer = 5
     def __init__(self, gridsize):
         self.gs = gridsize
         self.rows = []
@@ -147,6 +148,7 @@ class Row:
         self.extras = []
         self.caps = []
         self.offset = 0
+        self.text_buffer = drawing.text_buffer
         self.dwg = drawing.dwg
         self.gs = drawing.gs
         self.id = id
@@ -189,10 +191,8 @@ class Row:
             left_links = [l.render('text', None) for l in self.links if l.side == -1 and not isinstance(l, Label)]
             left_extras = [e.render('text', None) for e in self.extras if e.side == -1]
 
-            row = ''
             num_left_things = len(left_links) + len(left_extras)
-            if(num_left_things < self.offset):
-                row += ' '*(self.offset - num_left_things)
+            row = ' '*(self.text_buffer - num_left_things)
             row += ''.join(left_links) + ''.join(left_extras)
         else:
             g = self.dwg.g(id='row' + str(self.id))
