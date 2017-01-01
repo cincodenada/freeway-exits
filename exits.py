@@ -9,7 +9,7 @@ root = tree.getroot()
 hwys = {}
 hwy_names = set()
 
-hwy_segs = SegIndex('name')
+hwy_segs = SegIndex('name', dedup=True)
 links = SegIndex()
 
 print("Getting nodes...")
