@@ -326,10 +326,15 @@ class Link(Element):
         self.side = side
 
 class Exit(Link):
+    chars = {
+        False: {-1:'╗',1:'╔'},
+        True: {-1:'╲',1:'╱'},
+    }
     def render(self, fmt, idx, is_cap = False):
         relpos = self.get_relpos()
         if(fmt == 'text'):
-            return '╗' if self.get_flipside() == -1 else '╔'
+            return self.chars[is_cap][self.get_flipside()]
+
         if(self.row.flipped):
             rot = 90 if self.side == -1 else 180
         else:
@@ -343,10 +348,15 @@ class Exit(Link):
         )
 
 class Entrance(Link):
+    chars = {
+        False: {-1:'╔',1:'╗'},
+        True: {-1:'╱',1:'╲'},
+    }
     def render(self, fmt, idx, is_cap = False):
         relpos = self.get_relpos()
         if(fmt == 'text'):
-            return '╔' if self.get_flipside() == -1 else '╗'
+            return self.chars[is_cap][self.get_flipside()]
+
         if(self.row.flipped):
             rot = 0 if self.side == -1 else 270
         else:
