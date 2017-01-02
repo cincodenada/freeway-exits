@@ -65,8 +65,8 @@ class Row:
     def __init__(self, drawing, id):
         self.lanes = []
         self.links = []
-        self.extras = []
         self.caps = []
+        self.lane_diff = 0
         self.offset = 0
         self.text_buffer = drawing.text_buffer
         self.dwg = drawing.dwg
@@ -93,9 +93,7 @@ class Row:
                             lane_adj += 1
             if(lane_diff):
                 rel_row = self if lane_diff < 0 else last_row
-                lj = LaneJoiner(lane_diff, 1)
-                lj.set_row(rel_row)
-                rel_row.extras.append(lj)
+                rel_row.lane_diff = lane_diff
 
             # TODO: This will always eliminate rightmost lanes
             # Sometimes we might know that it's the left lane instead?
@@ -106,6 +104,13 @@ class Row:
             self.offset,
             self.id,
         )
+
+        if(self.lane_diff):
+            lj = LaneJoiner(self.lane_diff, 1)
+            lj.set_row(self)
+            self.extras = [lj]
+        else:
+            self.extras = []
 
         if(fmt == 'text'):
             left_links = [l.render('text', None) for l in self.links if l.side == -1 and not isinstance(l, Label)]
