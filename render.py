@@ -262,14 +262,15 @@ class Exit(Ramp):
         if(fmt == 'text'):
             return self.chars[is_cap][self.get_flipside()]
 
-        if(self.row.hwy.flipped):
-            rot = 0 if self.side == -1 else 270
-        else:
-            rot = 90 if self.side == -1 else 180
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
+        nameparts = []
+        nameparts.append('entrance' if self.row.hwy.flipped else 'exit')
+        if(is_cap):
+            nameparts.append('cap')
+        nameparts.append(self.sidename[self.side])
         return self.get_symbol(
-            'exit_' + ('cap_' if is_cap else '') + self.sidename[self.side],
+            '_'.join(nameparts),
             relpos, pos
         )
 
@@ -283,14 +284,15 @@ class Entrance(Ramp):
         if(fmt == 'text'):
             return self.chars[is_cap][self.get_flipside()]
 
-        if(self.row.hwy.flipped):
-            rot = 90 if self.side == -1 else 180
-        else:
-            rot = 0 if self.side == -1 else 270
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
+        nameparts = []
+        nameparts.append('exit' if self.row.hwy.flipped else 'entrance')
+        if(is_cap):
+            nameparts.append('cap')
+        nameparts.append(self.sidename[self.side])
         return self.get_symbol(
-            'entrance_' + ('cap_' if is_cap else '') + self.sidename[self.side],
+            '_'.join(nameparts),
             relpos, pos
         )
 
