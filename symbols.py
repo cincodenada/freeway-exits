@@ -1,6 +1,6 @@
 class Symbol:
     bez_circle_dist = 0.551915024494
-    def __init__(self, dwg, flipx, flipy):
+    def __init__(self, dwg, flipx=False, flipy=False):
         self.flipx = flipx
         self.flipy = flipy
         self.dwg = dwg
@@ -14,7 +14,7 @@ class Symbol:
         return self.g
 
 class Ramp(Symbol):
-    def __init__(self, dwg, flipx, flipy, radius=0.25):
+    def __init__(self, dwg, flipx=False, flipy=False, radius=0.25):
         self.radius = radius
         super().__init__(dwg, flipx, flipy)
 
@@ -76,3 +76,35 @@ class LaneEnd(Symbol):
         path.fill(opacity=0)
         path.stroke(color='black',width=0.05)
         self.g.add(path)
+
+class Lane(Symbol):
+    def __init__(self, dwg, flipx=False, flipy=False, edge=0):
+        self.edge = edge
+        super().__init__(dwg, flipx, flipy)
+
+    def render(self):
+        self.g.add(self.dwg.rect(
+            insert=(0,0),
+            size=(1,1),
+            fill='gray',
+        ))
+
+        left_side = self.dwg.line(
+            start=(0,0),
+            end=(0,1),
+            stroke='black',
+            stroke_width=0.05
+        )
+        if(self.edge != -1):
+            left_side.dasharray([0.1,0.1])
+        self.g.add(left_side)
+
+        right_side = self.dwg.line(
+            start=(1,0),
+            end=(1,1),
+            stroke='black',
+            stroke_width=0.05
+        )
+        if(self.edge != 1):
+            right_side.dasharray([0.1,0.1])
+        self.g.add(right_side)

@@ -22,6 +22,10 @@ class Diagram:
         self.add_sym("exit_cap_L", sym.LaneEnd(self.dwg, True, False))
         self.add_sym("entrance_cap_L", sym.LaneEnd(self.dwg, True, True))
 
+        self.add_sym("lane_mid", sym.Lane(self.dwg))
+        self.add_sym("lane_L", sym.Lane(self.dwg, edge=-1))
+        self.add_sym("lane_R", sym.Lane(self.dwg, edge=1))
+
     def add_sym(self, id, sym):
         new_sym = self.dwg.symbol(id=id)
         new_sym.add(sym.get_sym())
@@ -167,6 +171,7 @@ class Element:
         return sym
 
 class Lane(Element):
+    edge_name = {-1: 'L', 0: 'mid', 1: 'R'}
     def __init__(self, type = None):
         self.type = type
 
@@ -175,6 +180,8 @@ class Lane(Element):
             return -1 # Leftmost
         elif(pos == len(self.row.lanes) - 1):
             return 1 # Rightmost
+        else:
+            return 0
 
     def render(self, fmt, pos):
         edge = self.edge(pos)
@@ -187,53 +194,10 @@ class Lane(Element):
             else:
                 return '┆'
 
-
-        relpos = self.get_relpos()
-        g = self.dwg.g()
-        g.add(self.dwg.rect(
-            insert=(
-                (relpos[0] + pos)*self.row.gs,
-                relpos[1]*self.row.gs
-            ),
-            size=(
-                self.row.gs,
-                self.row.gs
-            ),
-            fill='gray',
-        ))
-
-        left_side = self.dwg.line(
-            start=(
-                (relpos[0] + pos)*self.row.gs,
-                relpos[1]*self.row.gs
-            ),
-            end=(
-                (relpos[0] + pos)*self.row.gs,
-                (relpos[1] + 1)*self.row.gs
-            ),
-            stroke='black',
-            stroke_width=1
+        return self.get_symbol(
+            'lane_' + self.edge_name[edge],
+            self.get_relpos(), pos
         )
-        if(edge != -1):
-            left_side.dasharray([2,2])
-        g.add(left_side)
-
-        right_side = self.dwg.line(
-            start=(
-                (relpos[0] + (pos+1))*self.row.gs,
-                relpos[1]*self.row.gs
-            ),
-            end=(
-                (relpos[0] + (pos+1))*self.row.gs,
-                (relpos[1] + 1)*self.row.gs
-            ),
-            stroke='black',
-            stroke_width=1
-        )
-        if(edge != 1):
-            right_side.dasharray([2,2])
-        g.add(right_side)
-        return g
 
 class Link(Element):
     def __init__(self, side):
