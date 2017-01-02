@@ -161,6 +161,7 @@ class Element:
     def get_symbol(self, id, relpos, pos, prefixes = []):
         sym = self.dwg.use('#' + id, (relpos[0]+pos, relpos[1]))
         sym.scale(self.row.gs)
+        prefixes.append(id)
         prefixes.append(sym.get_id())
         sym.attribs['id'] = '_'.join(prefixes)
         return sym
@@ -256,8 +257,7 @@ class Exit(Link):
 
         return self.get_symbol(
             'exit_' + ('cap_' if is_cap else '') + sidename[self.side],
-            relpos, pos,
-            ['exit', sidename[self.side]]
+            relpos, pos
         )
 
 class Entrance(Link):
@@ -278,8 +278,7 @@ class Entrance(Link):
 
         return self.get_symbol(
             'entrance_' + ('cap_' if is_cap else '') + sidename[self.side],
-            relpos, pos,
-            ['entrance', sidename[self.side]]
+            relpos, pos
         )
 
 class Label(Element):
