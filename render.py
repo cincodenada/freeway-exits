@@ -5,12 +5,13 @@ import symbols as sym
 
 class Diagram:
     text_buffer = 5
+    hwy_spacing = 750
     def __init__(self, gridsize):
         self.gs = gridsize
-        self.rows = []
         self.svg = svgwrite.Drawing(filename='out.svg', debug=True)
-
-        self.flipped = True
+        self.hwys = []
+        self.cur_horiz = 0
+        self.hwy_offset = self.hwy_spacing/gridsize
 
         self.add_sym("exit_R", sym.Ramp(self.svg, False, False))
         self.add_sym("entrance_R", sym.Ramp(self.svg, False, True))
@@ -36,27 +37,50 @@ class Diagram:
         new_sym.add(sym.get_sym())
         self.svg.defs.add(new_sym)
 
+    def add_hwy(self):
+        hwy = Highway(self)
+        self.cur_horiz += self.hwy_offset
+        self.hwys.append(hwy)
+        return hwy
+
     def render(self, fmt = 'svg'):
-        cur_offset = 0
+        for hwy in self.hwys:
+            # Determine direction
+            exit_nums = []
+            for r in hwy.rows:
+                try:
+                    exit_nums.append(int(r.links[0].number))
+                except (KeyError, IndexError, TypeError, ValueError):
+                    pass
 
-        # Determine direction
-        exit_nums = []
-        for r in self.rows:
-            try:
-                print(r.links[0].number)
-                exit_nums.append(int(r.links[0].number))
-            except (KeyError, IndexError, TypeError, ValueError):
-                pass
+            total_diff = 0
+            for i in range(len(exit_nums)-1):
+                total_diff += exit_nums[i] - exit_nums[i+1]
 
-        total_diff = 0
-        for i in range(len(exit_nums)-1):
-            total_diff += exit_nums[i] - exit_nums[i+1]
+            if(total_diff < 0):
+                hwy.rows.reverse()
+                hwy.flipped = True
 
-        if(total_diff < 0):
-            self.rows.reverse()
-            self.flipped = True
+            hwy.render()
 
-        last_row = None
+    def save(self):
+        return self.svg.save()
+
+class Highway:
+    def __init__(self, diagram):
+        self.dwg = diagram
+        self.horiz = diagram.cur_horiz
+        self.rows = []
+        self.flipped = False
+
+    def add_row(self, offset = None):
+        row = Row(self.dwg, self, len(self.rows))
+        if(offset is not None):
+            row.offset = offset
+        self.rows.append(row)
+        return row
+
+    def render(self, fmt = 'svg'):
         for idx in range(len(self.rows)):
             r = self.rows[idx]
             try:
@@ -68,20 +92,10 @@ class Diagram:
             if(fmt == 'text'):
                 print(row)
             else:
-                self.svg.add(row)
-
-    def save(self):
-        return self.svg.save()
-
-    def add_row(self, offset = None):
-        row = Row(self, len(self.rows))
-        if(offset is not None):
-            row.offset = offset
-        self.rows.append(row)
-        return row
+                self.dwg.svg.add(row)
 
 class Row:
-    def __init__(self, dwg, id):
+    def __init__(self, dwg, hwy, id):
         self.lanes = []
         self.links = []
         self.caps = []
@@ -90,6 +104,7 @@ class Row:
         self.dwg = dwg
         self.svg = dwg.svg
         self.gs = dwg.gs
+        self.hwy = hwy
         self.id = id
 
     def adjust_offset(self, last_row):
@@ -181,13 +196,13 @@ class Element:
         self.svg = row.svg
 
     def get_flip(self):
-        return -1 if self.row.dwg.flipped else 1
+        return -1 if self.row.hwy.flipped else 1
 
     def get_flipside(self):
         return self.side * self.get_flip()
 
     def get_relpos(self):
-        return (self.row.offset, self.row.id)
+        return (self.row.hwy.horiz + self.row.offset, self.row.id)
 
     def get_symbol(self, id, relpos, pos, prefixes = []):
         sym = self.svg.use('#' + id, (relpos[0]+pos, relpos[1]))
@@ -248,7 +263,7 @@ class Exit(Ramp):
         if(fmt == 'text'):
             return self.chars[is_cap][self.get_flipside()]
 
-        if(self.row.dwg.flipped):
+        if(self.row.hwy.flipped):
             rot = 90 if self.side == -1 else 180
         else:
             rot = 0 if self.side == -1 else 270
@@ -269,7 +284,7 @@ class Entrance(Ramp):
         if(fmt == 'text'):
             return self.chars[is_cap][self.get_flipside()]
 
-        if(self.row.dwg.flipped):
+        if(self.row.hwy.flipped):
             rot = 0 if self.side == -1 else 270
         else:
             rot = 90 if self.side == -1 else 180

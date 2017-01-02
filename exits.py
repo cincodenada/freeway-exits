@@ -44,6 +44,8 @@ for seg in hwy_segs.segs.values():
 
 dwg = render.Diagram(20)
 for start in hwys.get_hwy('I 5').starts:
+    curhwy = dwg.add_hwy()
+
     curseg = start
     lastlanes = start.lanes
     lastlinks = len(start.links)
@@ -64,11 +66,11 @@ for start in hwys.get_hwy('I 5').starts:
                     # Add an extra row if we have lane changes
                     # that aren't accounted for by exits/entrances
                     if(lane_diff and lane_diff > last_link_diff):
-                        row = dwg.add_row()
+                        row = curhwy.add_row()
                         for n in range(lastlanes):
                             row.add_lane(render.Lane())
 
-                    row = dwg.add_row()
+                    row = curhwy.add_row()
                     for n in range(curlanes):
                         row.add_lane(render.Lane())
 
@@ -86,11 +88,11 @@ for start in hwys.get_hwy('I 5').starts:
                 # If we had links last time,
                 # Add a lane to make room for the expansion
                 if(lastlinks > 0):
-                    row = dwg.add_row()
+                    row = curhwy.add_row()
                     for n in range(lastlanes):
                         row.add_lane(render.Lane())
 
-                row = dwg.add_row()
+                row = curhwy.add_row()
                 for n in range(curlanes):
                     row.add_lane(render.Lane())
 
@@ -98,7 +100,6 @@ for start in hwys.get_hwy('I 5').starts:
         lastlinks = len(curseg.links)
         extra_lanes -= curseg.remove_lanes
         curseg = curseg.next
-    dwg.add_row(0)
 
 dwg.render('text')
 dwg.render()
