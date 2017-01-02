@@ -3,8 +3,6 @@ from svgwrite import mm
 from math import copysign
 import symbols as sym
 
-sidename = {-1: 'L', 1: 'R'}
-
 class Diagram:
     text_buffer = 5
     def __init__(self, gridsize):
@@ -25,6 +23,11 @@ class Diagram:
         self.add_sym("lane_mid", sym.Lane(self.dwg))
         self.add_sym("lane_L", sym.Lane(self.dwg, edge=-1))
         self.add_sym("lane_R", sym.Lane(self.dwg, edge=1))
+
+        self.add_sym("lane_split_R", sym.LaneJoiner(self.dwg))
+        self.add_sym("lane_split_L", sym.LaneJoiner(self.dwg, flipx=True))
+        self.add_sym("lane_join_R", sym.LaneJoiner(self.dwg, flipy=True))
+        self.add_sym("lane_join_L", sym.LaneJoiner(self.dwg, True, True))
 
     def add_sym(self, id, sym):
         new_sym = self.dwg.symbol(id=id)
@@ -148,7 +151,7 @@ class Row:
         self.links.append(el)
 
 class Element:
-    bez_circle_dist = 0.551915024494
+    sidename = {-1: 'L', 1: 'R'}
     def set_row(self, row):
         self.row = row
         self.dwg = row.dwg
@@ -203,6 +206,9 @@ class Link(Element):
     def __init__(self, side):
         self.side = side
 
+    def get_pos(self, idx):
+        return -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
+
 class Exit(Link):
     chars = {
         False: {-1:'╗',1:'╔'},
@@ -220,7 +226,7 @@ class Exit(Link):
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
         return self.get_symbol(
-            'exit_' + ('cap_' if is_cap else '') + sidename[self.side],
+            'exit_' + ('cap_' if is_cap else '') + self.sidename[self.side],
             relpos, pos
         )
 
@@ -241,7 +247,7 @@ class Entrance(Link):
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
         return self.get_symbol(
-            'entrance_' + ('cap_' if is_cap else '') + sidename[self.side],
+            'entrance_' + ('cap_' if is_cap else '') + self.sidename[self.side],
             relpos, pos
         )
 
@@ -270,15 +276,22 @@ class Label(Element):
             text_anchor=anchor
         )
 
-class LaneJoiner(Element):
+class LaneJoiner(Link):
     def __init__(self, diff, side):
         self.diff = diff
         self.direction = copysign(1, diff) # Reduction = -1, Addition = 1
-        self.side = side
+        super().__init__(side)
 
-    def render(self, fmt, pos):
+    def render(self, fmt, idx):
         if(fmt == 'text'):
             lines = '-'*(abs(self.diff)-1)
-            return '/' + lines if(self.direction == self.get_flipside()) else lines + '\\'
-        else:
-            return self.row.dwg.g()
+            return ('/' + lines if(self.direction == self.get_flipside()) else lines + '\\')
+
+        return self.get_symbol(
+            '_'.join([
+                'lane',
+                'split' if self.diff > 0 else 'join',
+                self.sidename[self.side]
+            ]),
+            self.get_relpos(), self.get_pos(idx)
+        )

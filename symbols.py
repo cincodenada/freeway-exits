@@ -108,3 +108,16 @@ class Lane(Symbol):
         if(self.edge != 1):
             right_side.dasharray([0.1,0.1])
         self.g.add(right_side)
+
+class LaneJoiner(Symbol):
+    def render(self):
+        path = self.dwg.path(d=('M',0,0))
+        path.push('l',1,1)
+        path.push('l',-1,0)
+        path.fill(color='gray')
+        self.g.add(path)
+
+        path = self.dwg.path(d=('M',0,0))
+        path.push('l',1,1)
+        path.stroke(color='black',width=0.05)
+        self.g.add(path)
