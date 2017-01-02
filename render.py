@@ -11,7 +11,7 @@ class Diagram:
         self.svg = svgwrite.Drawing(filename='out.svg', debug=True)
         self.hwys = []
         self.cur_horiz = 0
-        self.hwy_offset = self.hwy_spacing/gridsize
+        self.hwy_offset = int(self.hwy_spacing/gridsize)
 
         self.add_sym("exit_R", sym.Ramp(self.svg, False, False))
         self.add_sym("entrance_R", sym.Ramp(self.svg, False, True))
@@ -61,7 +61,9 @@ class Diagram:
                 hwy.rows.reverse()
                 hwy.flipped = True
 
-            hwy.render()
+            hwy.render(fmt)
+            if(fmt == 'text'):
+                print('='*(self.hwy_offset+self.text_buffer))
 
     def save(self):
         return self.svg.save()
@@ -196,7 +198,7 @@ class Element:
         self.svg = row.svg
 
     def get_flip(self):
-        return -1 if self.row.hwy.flipped else 1
+        return 1 if self.row.hwy.flipped else -1
 
     def get_flipside(self):
         return self.side * self.get_flip()
@@ -264,9 +266,9 @@ class Exit(Ramp):
             return self.chars[is_cap][self.get_flipside()]
 
         if(self.row.hwy.flipped):
-            rot = 90 if self.side == -1 else 180
-        else:
             rot = 0 if self.side == -1 else 270
+        else:
+            rot = 90 if self.side == -1 else 180
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
         return self.get_symbol(
@@ -285,9 +287,9 @@ class Entrance(Ramp):
             return self.chars[is_cap][self.get_flipside()]
 
         if(self.row.hwy.flipped):
-            rot = 0 if self.side == -1 else 270
-        else:
             rot = 90 if self.side == -1 else 180
+        else:
+            rot = 0 if self.side == -1 else 270
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
         return self.get_symbol(
@@ -315,7 +317,7 @@ class Label(Element):
         return self.svg.text(self.text,
             insert=(
                 (relpos[0] + our_pos)*self.row.gs,
-                (relpos[1] + 0.5)*self.row.gs
+                (relpos[1] + 0.75)*self.row.gs
             ),
             text_anchor=anchor
         )
