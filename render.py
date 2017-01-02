@@ -76,7 +76,7 @@ class Highway:
         self.flipped = False
 
     def add_row(self, offset = None):
-        row = Row(self.dwg, self, len(self.rows))
+        row = Row(self.dwg, self)
         if(offset is not None):
             row.offset = offset
         self.rows.append(row)
@@ -90,14 +90,14 @@ class Highway:
             except IndexError:
                 pass
 
-            row = r.render(fmt)
+            row = r.render(fmt, idx)
             if(fmt == 'text'):
                 print(row)
             else:
                 self.dwg.svg.add(row)
 
 class Row:
-    def __init__(self, dwg, hwy, id):
+    def __init__(self, dwg, hwy):
         self.lanes = []
         self.links = []
         self.caps = []
@@ -107,7 +107,6 @@ class Row:
         self.svg = dwg.svg
         self.gs = dwg.gs
         self.hwy = hwy
-        self.id = id
 
     def adjust_offset(self, last_row):
         if(last_row):
@@ -135,11 +134,9 @@ class Row:
             # Sometimes we might know that it's the left lane instead?
             self.offset = last_row.offset + lane_adj
 
-    def render(self, fmt):
-        pos = (
-            self.offset,
-            self.id,
-        )
+    def render(self, fmt, idx):
+        self.idx = idx
+        pos = (self.offset, self.idx)
 
         if(self.lane_diff):
             lj = LaneJoiner(self.lane_diff, 1)
@@ -156,7 +153,7 @@ class Row:
             row = ' '*(self.dwg.text_buffer + self.offset - num_left_things)
             row += ''.join(left_links) + ''.join(left_extras)
         else:
-            g = self.svg.g(id='row' + str(self.id))
+            g = self.svg.g(id='row' + str(self.idx))
 
         for (i, l) in enumerate(self.lanes):
             lane = l.render(fmt, i)
@@ -204,7 +201,7 @@ class Element:
         return self.side * self.get_flip()
 
     def get_relpos(self):
-        return (self.row.hwy.horiz + self.row.offset, self.row.id)
+        return (self.row.hwy.horiz + self.row.offset, self.row.idx)
 
     def get_symbol(self, id, relpos, pos, prefixes = []):
         sym = self.svg.use('#' + id, (relpos[0]+pos, relpos[1]))
