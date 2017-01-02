@@ -1,122 +1,48 @@
 import svgwrite
 from svgwrite import mm
 from math import copysign
+import symbols as sym
 
 sidename = {-1: 'L', 1: 'R'}
 
 class Diagram:
-    bez_circle_dist = 0.551915024494
     text_buffer = 5
     def __init__(self, gridsize):
         self.gs = gridsize
         self.rows = []
         self.dwg = svgwrite.Drawing(filename='out.svg', debug=True)
 
-        # Create defs
-        ramp_radius = 0.25
-
         exit_r = self.dwg.symbol(id="exit_R")
-        exit_r.add(self.make_ramp(ramp_radius, False, False))
+        exit_r.add(sym.Ramp(self.dwg, False, False).get_sym())
         self.dwg.defs.add(exit_r)
 
         entrance_r = self.dwg.symbol(id="entrance_R")
-        entrance_r.add(self.make_ramp(ramp_radius, False, True))
+        entrance_r.add(sym.Ramp(self.dwg, False, True).get_sym())
         self.dwg.defs.add(entrance_r)
 
         exit_l = self.dwg.symbol(id="exit_L")
-        exit_l.add(self.make_ramp(ramp_radius, True, False))
+        exit_l.add(sym.Ramp(self.dwg, True, False).get_sym())
         self.dwg.defs.add(exit_l)
 
         entrance_l = self.dwg.symbol(id="entrance_L")
-        entrance_l.add(self.make_ramp(ramp_radius, True, True))
+        entrance_l.add(sym.Ramp(self.dwg, True, True).get_sym())
         self.dwg.defs.add(entrance_l)
 
         exit_cap_r = self.dwg.symbol(id="exit_cap_R")
-        exit_cap_r.add(self.make_lane_end(False, False))
+        exit_cap_r.add(sym.LaneEnd(self.dwg, False, False).get_sym())
         self.dwg.defs.add(exit_cap_r)
 
         entrance_cap_r = self.dwg.symbol(id="entrance_cap_R")
-        entrance_cap_r.add(self.make_lane_end(False, True))
+        entrance_cap_r.add(sym.LaneEnd(self.dwg, False, True).get_sym())
         self.dwg.defs.add(entrance_cap_r)
 
         exit_cap_l = self.dwg.symbol(id="exit_cap_L")
-        exit_cap_l.add(self.make_lane_end(True, False))
+        exit_cap_l.add(sym.LaneEnd(self.dwg, True, False).get_sym())
         self.dwg.defs.add(exit_cap_l)
 
         entrance_cap_l = self.dwg.symbol(id="entrance_cap_L")
-        entrance_cap_l.add(self.make_lane_end(True, True))
+        entrance_cap_l.add(sym.LaneEnd(self.dwg, True, True).get_sym())
         self.dwg.defs.add(entrance_cap_l)
-
-    def make_ramp(self, ramp_radius, flipx=False, flipy=False):
-        g = self.dwg.g()
-        ramp_path = self.dwg.path(d=('M',0,0))
-        ramp_path.push('c',
-            0, ramp_radius*self.bez_circle_dist,
-            ramp_radius*(1-self.bez_circle_dist), ramp_radius,
-            ramp_radius, ramp_radius
-        )
-        ramp_path.push('l', 1-ramp_radius, 0)
-        ramp_path.push('l', 0, 1-ramp_radius)
-        ramp_path.push('l', -(1-ramp_radius), 0)
-        ramp_path.push('c',
-            -ramp_radius*self.bez_circle_dist, 0,
-            -ramp_radius, -ramp_radius*(1-self.bez_circle_dist),
-            -ramp_radius, -ramp_radius
-        )
-        ramp_path.fill(color='gray')
-        g.add(ramp_path)
-
-        ramp_outline = self.dwg.path(d=('M',0,0))
-        ramp_outline.push('c',
-            0, ramp_radius*self.bez_circle_dist,
-            ramp_radius*(1-self.bez_circle_dist), ramp_radius,
-            ramp_radius, ramp_radius
-        )
-        ramp_outline.push('l', 1-ramp_radius, 0)
-        ramp_outline.push('m', 0, 1-ramp_radius)
-        ramp_outline.push('l', -(1-ramp_radius), 0)
-        ramp_outline.push('c',
-            -ramp_radius*self.bez_circle_dist, 0,
-            -ramp_radius, -ramp_radius*(1-self.bez_circle_dist),
-            -ramp_radius, -ramp_radius
-        )
-        ramp_outline.stroke(color='black',width=0.05)
-        ramp_outline.fill(opacity=0)
-        g.add(ramp_outline)
-
-        g.scale((-1 if flipx else 1, -1 if flipy else 1))
-        g.translate((-1 if flipx else 0, -1 if flipy else 0))
-
-        return g
-
-    def make_lane_end(self, flipx=False, flipy=False):
-        g = self.dwg.g()
-
-        path = self.dwg.path(d=('M',0,0))
-        path.push('c',
-            0, self.bez_circle_dist,
-            (1 - self.bez_circle_dist), 1,
-            1, 1
-        )
-        path.push('l', 0, -1)
-        path.push('l', -1, 0)
-        path.fill(color='gray')
-        g.add(path)
-        path = self.dwg.path(d=('M',0,0))
-        path.push('c',
-            0, self.bez_circle_dist,
-            1 - self.bez_circle_dist, 1,
-            1, 1
-        )
-        path.fill(opacity=0)
-        path.stroke(color='black',width=0.05)
-        g.add(path)
-
-        g.scale((-1 if flipx else 1, -1 if flipy else 1))
-        g.translate((-1 if flipx else 0, -1 if flipy else 0))
-
-        return g
-
 
     def render(self, fmt = 'svg'):
         cur_offset = 0
