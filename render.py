@@ -138,8 +138,10 @@ class Diagram:
     def save(self):
         return self.dwg.save()
 
-    def add_row(self):
+    def add_row(self, offset = None):
         row = Row(self, len(self.rows))
+        if(offset is not None):
+            row.offset = offset
         self.rows.append(row)
         return row
 

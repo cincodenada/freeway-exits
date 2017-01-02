@@ -86,7 +86,7 @@ for start in hwys.get_hwy('I 5').starts:
         lastlinks = len(curseg.links)
         extra_lanes -= curseg.remove_lanes
         curseg = curseg.next
-    dwg.add_row()
+    dwg.add_row(0)
 
 dwg.render('text')
 dwg.render()
