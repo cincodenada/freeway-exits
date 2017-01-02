@@ -8,38 +8,39 @@ class Diagram:
     def __init__(self, gridsize):
         self.gs = gridsize
         self.rows = []
-        self.dwg = svgwrite.Drawing(filename='out.svg', debug=True)
+        self.svg = svgwrite.Drawing(filename='out.svg', debug=True)
 
-        self.add_sym("exit_R", sym.Ramp(self.dwg, False, False))
-        self.add_sym("entrance_R", sym.Ramp(self.dwg, False, True))
-        self.add_sym("exit_L", sym.Ramp(self.dwg, True, False))
-        self.add_sym("entrance_L", sym.Ramp(self.dwg, True, True))
+        self.flipped = True
 
-        self.add_sym("exit_cap_R", sym.LaneEnd(self.dwg, False, False))
-        self.add_sym("entrance_cap_R", sym.LaneEnd(self.dwg, False, True))
-        self.add_sym("exit_cap_L", sym.LaneEnd(self.dwg, True, False))
-        self.add_sym("entrance_cap_L", sym.LaneEnd(self.dwg, True, True))
+        self.add_sym("exit_R", sym.Ramp(self.svg, False, False))
+        self.add_sym("entrance_R", sym.Ramp(self.svg, False, True))
+        self.add_sym("exit_L", sym.Ramp(self.svg, True, False))
+        self.add_sym("entrance_L", sym.Ramp(self.svg, True, True))
 
-        self.add_sym("lane_mid", sym.Lane(self.dwg))
-        self.add_sym("lane_L", sym.Lane(self.dwg, edge=-1))
-        self.add_sym("lane_R", sym.Lane(self.dwg, edge=1))
+        self.add_sym("exit_cap_R", sym.LaneEnd(self.svg, False, False))
+        self.add_sym("entrance_cap_R", sym.LaneEnd(self.svg, False, True))
+        self.add_sym("exit_cap_L", sym.LaneEnd(self.svg, True, False))
+        self.add_sym("entrance_cap_L", sym.LaneEnd(self.svg, True, True))
 
-        self.add_sym("lane_split_R", sym.LaneJoiner(self.dwg))
-        self.add_sym("lane_split_L", sym.LaneJoiner(self.dwg, flipx=True))
-        self.add_sym("lane_join_R", sym.LaneJoiner(self.dwg, flipy=True))
-        self.add_sym("lane_join_L", sym.LaneJoiner(self.dwg, True, True))
+        self.add_sym("lane_mid", sym.Lane(self.svg))
+        self.add_sym("lane_L", sym.Lane(self.svg, edge=-1))
+        self.add_sym("lane_R", sym.Lane(self.svg, edge=1))
+
+        self.add_sym("lane_split_R", sym.LaneJoiner(self.svg))
+        self.add_sym("lane_split_L", sym.LaneJoiner(self.svg, flipx=True))
+        self.add_sym("lane_join_R", sym.LaneJoiner(self.svg, flipy=True))
+        self.add_sym("lane_join_L", sym.LaneJoiner(self.svg, True, True))
 
     def add_sym(self, id, sym):
-        new_sym = self.dwg.symbol(id=id)
+        new_sym = self.svg.symbol(id=id)
         new_sym.add(sym.get_sym())
-        self.dwg.defs.add(new_sym)
+        self.svg.defs.add(new_sym)
 
     def render(self, fmt = 'svg'):
         cur_offset = 0
         last_row = None
         for idx in range(len(self.rows)):
             r = self.rows[idx]
-            r.flipped = True
             try:
                 self.rows[idx+1].adjust_offset(r)
             except IndexError:
@@ -49,10 +50,10 @@ class Diagram:
             if(fmt == 'text'):
                 print(row)
             else:
-                self.dwg.add(row)
+                self.svg.add(row)
 
     def save(self):
-        return self.dwg.save()
+        return self.svg.save()
 
     def add_row(self, offset = None):
         row = Row(self, len(self.rows))
@@ -62,15 +63,15 @@ class Diagram:
         return row
 
 class Row:
-    def __init__(self, drawing, id):
+    def __init__(self, dwg, id):
         self.lanes = []
         self.links = []
         self.caps = []
         self.lane_diff = 0
         self.offset = 0
-        self.text_buffer = drawing.text_buffer
-        self.dwg = drawing.dwg
-        self.gs = drawing.gs
+        self.dwg = dwg
+        self.svg = dwg.svg
+        self.gs = dwg.gs
         self.id = id
 
     def adjust_offset(self, last_row):
@@ -117,10 +118,10 @@ class Row:
             left_extras = [e.render('text', None) for e in self.extras if e.side == -1]
 
             num_left_things = len(left_links) + len(left_extras)
-            row = ' '*(self.text_buffer + self.offset - num_left_things)
+            row = ' '*(self.dwg.text_buffer + self.offset - num_left_things)
             row += ''.join(left_links) + ''.join(left_extras)
         else:
-            g = self.dwg.g(id='row' + str(self.id))
+            g = self.svg.g(id='row' + str(self.id))
 
         for (i, l) in enumerate(self.lanes):
             lane = l.render(fmt, i)
@@ -159,10 +160,10 @@ class Element:
     sidename = {-1: 'L', 1: 'R'}
     def set_row(self, row):
         self.row = row
-        self.dwg = row.dwg
+        self.svg = row.svg
 
     def get_flip(self):
-        return -1 if self.row.flipped else 1
+        return -1 if self.row.dwg.flipped else 1
 
     def get_flipside(self):
         return self.side * self.get_flip()
@@ -171,7 +172,7 @@ class Element:
         return (self.row.offset, self.row.id)
 
     def get_symbol(self, id, relpos, pos, prefixes = []):
-        sym = self.dwg.use('#' + id, (relpos[0]+pos, relpos[1]))
+        sym = self.svg.use('#' + id, (relpos[0]+pos, relpos[1]))
         sym.scale(self.row.gs)
         prefixes.append(id)
         prefixes.append(sym.get_id())
@@ -224,7 +225,7 @@ class Exit(Link):
         if(fmt == 'text'):
             return self.chars[is_cap][self.get_flipside()]
 
-        if(self.row.flipped):
+        if(self.row.dwg.flipped):
             rot = 90 if self.side == -1 else 180
         else:
             rot = 0 if self.side == -1 else 270
@@ -245,7 +246,7 @@ class Entrance(Link):
         if(fmt == 'text'):
             return self.chars[is_cap][self.get_flipside()]
 
-        if(self.row.flipped):
+        if(self.row.dwg.flipped):
             rot = 0 if self.side == -1 else 270
         else:
             rot = 90 if self.side == -1 else 180
@@ -273,7 +274,7 @@ class Label(Element):
         our_pos = (pos+1) if(self.side == -1) else pos
 
         #TODO: Figure out a baseline to center this vertically as well
-        return self.dwg.text(self.text,
+        return self.svg.text(self.text,
             insert=(
                 (relpos[0] + our_pos)*self.row.gs,
                 (relpos[1] + 0.5)*self.row.gs
