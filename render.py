@@ -83,7 +83,7 @@ class Row:
                         last_row.caps.append(idx)
                         lane_diff-=1
                         if(l.side == -1):
-                            lane_adj += 1
+                            lane_adj -= 1
             for (idx, l) in enumerate(self.links):
                 if(isinstance(l, Exit)):
                     if(lane_diff < 0):
