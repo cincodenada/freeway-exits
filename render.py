@@ -12,37 +12,20 @@ class Diagram:
         self.rows = []
         self.dwg = svgwrite.Drawing(filename='out.svg', debug=True)
 
-        exit_r = self.dwg.symbol(id="exit_R")
-        exit_r.add(sym.Ramp(self.dwg, False, False).get_sym())
-        self.dwg.defs.add(exit_r)
+        self.add_sym("exit_R", sym.Ramp(self.dwg, False, False))
+        self.add_sym("entrance_R", sym.Ramp(self.dwg, False, True))
+        self.add_sym("exit_L", sym.Ramp(self.dwg, True, False))
+        self.add_sym("entrance_L", sym.Ramp(self.dwg, True, True))
 
-        entrance_r = self.dwg.symbol(id="entrance_R")
-        entrance_r.add(sym.Ramp(self.dwg, False, True).get_sym())
-        self.dwg.defs.add(entrance_r)
+        self.add_sym("exit_cap_R", sym.LaneEnd(self.dwg, False, False))
+        self.add_sym("entrance_cap_R", sym.LaneEnd(self.dwg, False, True))
+        self.add_sym("exit_cap_L", sym.LaneEnd(self.dwg, True, False))
+        self.add_sym("entrance_cap_L", sym.LaneEnd(self.dwg, True, True))
 
-        exit_l = self.dwg.symbol(id="exit_L")
-        exit_l.add(sym.Ramp(self.dwg, True, False).get_sym())
-        self.dwg.defs.add(exit_l)
-
-        entrance_l = self.dwg.symbol(id="entrance_L")
-        entrance_l.add(sym.Ramp(self.dwg, True, True).get_sym())
-        self.dwg.defs.add(entrance_l)
-
-        exit_cap_r = self.dwg.symbol(id="exit_cap_R")
-        exit_cap_r.add(sym.LaneEnd(self.dwg, False, False).get_sym())
-        self.dwg.defs.add(exit_cap_r)
-
-        entrance_cap_r = self.dwg.symbol(id="entrance_cap_R")
-        entrance_cap_r.add(sym.LaneEnd(self.dwg, False, True).get_sym())
-        self.dwg.defs.add(entrance_cap_r)
-
-        exit_cap_l = self.dwg.symbol(id="exit_cap_L")
-        exit_cap_l.add(sym.LaneEnd(self.dwg, True, False).get_sym())
-        self.dwg.defs.add(exit_cap_l)
-
-        entrance_cap_l = self.dwg.symbol(id="entrance_cap_L")
-        entrance_cap_l.add(sym.LaneEnd(self.dwg, True, True).get_sym())
-        self.dwg.defs.add(entrance_cap_l)
+    def add_sym(self, id, sym):
+        new_sym = self.dwg.symbol(id=id)
+        new_sym.add(sym.get_sym())
+        self.dwg.defs.add(new_sym)
 
     def render(self, fmt = 'svg'):
         cur_offset = 0
