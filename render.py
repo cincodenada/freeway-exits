@@ -38,6 +38,24 @@ class Diagram:
 
     def render(self, fmt = 'svg'):
         cur_offset = 0
+
+        # Determine direction
+        exit_nums = []
+        for r in self.rows:
+            try:
+                print(r.links[0].number)
+                exit_nums.append(int(r.links[0].number))
+            except (KeyError, IndexError, TypeError, ValueError):
+                pass
+
+        total_diff = 0
+        for i in range(len(exit_nums)-1):
+            total_diff += exit_nums[i] - exit_nums[i+1]
+
+        if(total_diff < 0):
+            self.rows.reverse()
+            self.flipped = True
+
         last_row = None
         for idx in range(len(self.rows)):
             r = self.rows[idx]
@@ -215,7 +233,12 @@ class Link(Element):
     def get_pos(self, idx):
         return -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
-class Exit(Link):
+class Ramp(Link):
+    def __init__(self, type = None, number = None):
+        self.number = number
+        super().__init__(type)
+
+class Exit(Ramp):
     chars = {
         False: {-1:'╗',1:'╔'},
         True: {-1:'╲',1:'╱'},
@@ -236,7 +259,7 @@ class Exit(Link):
             relpos, pos
         )
 
-class Entrance(Link):
+class Entrance(Ramp):
     chars = {
         False: {-1:'╔',1:'╗'},
         True: {-1:'╱',1:'╲'},

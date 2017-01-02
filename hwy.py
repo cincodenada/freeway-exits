@@ -51,7 +51,10 @@ class HwySeg:
         fromto = 'to' if trunk.get_link_type(self) == 'exit' else 'from'
         side = trunk.get_side(self)
         dest = self.dest if self.dest else '???'
-        return '{} {} {}'.format(self.node_pool[self.start].name, fromto, dest, side)
+        return '{} {} {}'.format(self.get_number(), fromto, dest, side)
+
+    def get_number(self):
+        return self.node_pool[self.start].name
 
     def get_tag(self, k):
         tagel = self.el.find("./tag[@k='{}']".format(k))

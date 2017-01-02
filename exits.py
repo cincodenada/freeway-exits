@@ -73,10 +73,10 @@ for start in hwys.get_hwy('I 5').starts:
                         row.add_lane(render.Lane())
 
                     if(type == 'exit'):
-                        row.add_link(render.Exit(side))
+                        row.add_link(render.Exit(side, link.get_number()))
                         last_link_diff = -1
                     else:
-                        row.add_link(render.Entrance(side))
+                        row.add_link(render.Entrance(side, link.get_number()))
                         last_link_diff = 1
                     row.add_link(render.Label(side, type, link.describe_link(curseg)))
 
