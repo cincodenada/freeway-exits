@@ -14,8 +14,10 @@ class Symbol:
         return self.g
 
 class Ramp(Symbol):
-    def __init__(self, dwg, flipx=False, flipy=False, radius=0.25):
+    width=2
+    def __init__(self, dwg, flipx=False, flipy=False, radius=0.25, cap_color='gray'):
         self.radius = radius
+        self.cap_color = cap_color
         super().__init__(dwg, flipx, flipy)
 
     def render(self):
@@ -36,15 +38,21 @@ class Ramp(Symbol):
         ramp_path.fill(color='gray')
         self.g.add(ramp_path)
 
+        self.g.add(self.dwg.rect(
+            insert=(1,self.radius),
+            size=(1,1-self.radius),
+            fill=self.cap_color,
+        ))
+
         ramp_outline = self.dwg.path(d=('M',0,0))
         ramp_outline.push('c',
             0, self.radius*self.bez_circle_dist,
             self.radius*(1-self.bez_circle_dist), self.radius,
             self.radius, self.radius
         )
-        ramp_outline.push('l', 1-self.radius, 0)
+        ramp_outline.push('l', 2-self.radius, 0)
         ramp_outline.push('m', 0, 1-self.radius)
-        ramp_outline.push('l', -(1-self.radius), 0)
+        ramp_outline.push('l', -(2-self.radius), 0)
         ramp_outline.push('c',
             -self.radius*self.bez_circle_dist, 0,
             -self.radius, -self.radius*(1-self.bez_circle_dist),
@@ -55,6 +63,11 @@ class Ramp(Symbol):
         self.g.add(ramp_outline)
 
 class LaneEnd(Symbol):
+    width=2
+    def __init__(self, dwg, flipx=False, flipy=False, cap_color='gray'):
+        self.cap_color = cap_color
+        super().__init__(dwg, flipx, flipy)
+
     def render(self):
         path = self.dwg.path(d=('M',0,0))
         path.push('c',
@@ -66,6 +79,12 @@ class LaneEnd(Symbol):
         path.push('l', -1, 0)
         path.fill(color='gray')
         self.g.add(path)
+
+        self.g.add(self.dwg.rect(
+            insert=(1,0),
+            size=(1,1),
+            fill=self.cap_color,
+        ))
 
         path = self.dwg.path(d=('M',0,0))
         path.push('c',

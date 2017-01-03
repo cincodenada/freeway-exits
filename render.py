@@ -13,15 +13,15 @@ class Diagram:
         self.cur_horiz = 0
         self.hwy_offset = int(self.hwy_spacing/gridsize)
 
-        self.add_sym("exit_R", sym.Ramp(self.svg, False, False))
-        self.add_sym("entrance_R", sym.Ramp(self.svg, False, True))
-        self.add_sym("exit_L", sym.Ramp(self.svg, True, False))
-        self.add_sym("entrance_L", sym.Ramp(self.svg, True, True))
+        self.add_sym("exit_R", sym.Ramp(self.svg, False, False, cap_color='red'))
+        self.add_sym("entrance_R", sym.Ramp(self.svg, False, True, cap_color='green'))
+        self.add_sym("exit_L", sym.Ramp(self.svg, True, False, cap_color='red'))
+        self.add_sym("entrance_L", sym.Ramp(self.svg, True, True, cap_color='green'))
 
-        self.add_sym("exit_cap_R", sym.LaneEnd(self.svg, False, False))
-        self.add_sym("entrance_cap_R", sym.LaneEnd(self.svg, False, True))
-        self.add_sym("exit_cap_L", sym.LaneEnd(self.svg, True, False))
-        self.add_sym("entrance_cap_L", sym.LaneEnd(self.svg, True, True))
+        self.add_sym("exit_cap_R", sym.LaneEnd(self.svg, False, False, cap_color='red'))
+        self.add_sym("entrance_cap_R", sym.LaneEnd(self.svg, False, True, cap_color='green'))
+        self.add_sym("exit_cap_L", sym.LaneEnd(self.svg, True, False, cap_color='red'))
+        self.add_sym("entrance_cap_L", sym.LaneEnd(self.svg, True, True, cap_color='green'))
 
         self.add_sym("lane_mid", sym.Lane(self.svg))
         self.add_sym("lane_L", sym.Lane(self.svg, edge=-1))
@@ -176,7 +176,7 @@ class Row:
             for (idx, l) in enumerate(self.links):
                 l.set_row(self)
                 g.add(l.render(fmt, counts[l.side], (idx in self.caps)))
-                counts[l.side] += 1
+                counts[l.side] += 2
 
             return g
 
