@@ -30,6 +30,8 @@ class HwySeg:
         self.name = self.get_tag('ref')
         self.type = self.get_tag('highway')
         self.dest = self.get_tag('destination')
+        if(not self.dest):
+            self.dest = self.get_tag('destination:ref')
 
         self.add_lanes = 0
         self.remove_lanes = 0
@@ -161,6 +163,17 @@ class Hwy:
     def lookup(self, seg_id, idx):
         return self.parent.segs.lookup(seg_id, idx, self.name)
 
+    def dump_entrance_nodes(self):
+        nodes = set()
+        for start in self.starts:
+            curseg = start
+            while(curseg):
+                for (t, id) in curseg.links:
+                    if(t == 'entrance'):
+                        seg = self.parent.links.get(id)
+                        print(seg.start)
+                curseg = curseg.next
+
 class HwySet:
     def __init__(self, segs, links):
         self.hwys = {}
@@ -226,13 +239,13 @@ class SegIndex:
             else:
                 cur_list[getattr(seg, cur_idx)] = seg.id
 
-    def lookup(self, seg_id, idx, segment = None):
+    def lookup(self, node_id, idx, segment = None):
         lookup = self.idx[idx]
         if(segment):
             lookup = lookup[segment]
 
-        if(seg_id in lookup):
-            return lookup[seg_id]
+        if(node_id in lookup):
+            return lookup[node_id]
         else:
             return None
 

@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as ET
 from hwy import Node, HwySeg, Hwy, HwySet, SegIndex
 import render
+from glob import glob
+import sys
 
 tree = ET.parse('motorway.osm')
 root = tree.getroot()
@@ -11,14 +13,15 @@ hwy_names = set()
 
 hwy_segs = SegIndex('name', dedup=True)
 links = SegIndex()
+link_entrances = SegIndex()
 
-print("Getting nodes...")
+print("Getting nodes...", file=sys.stderr)
 nodes = {}
 for n in root.iter('node'):
     curnode = Node(n)
     nodes[curnode.id] = curnode
 
-print("Getting ways...")
+print("Getting ways...", file=sys.stderr)
 for way in root.iter('way'):
     try:
         if(way.find("./tag[@k='oneway']").get('v') != 'yes'):
@@ -34,7 +37,23 @@ for way in root.iter('way'):
     elif(seg.type == 'motorway_link'):
         links.add(seg)
 
-print("Analyzing...")
+print("Getting entrance ways...", file=sys.stderr)
+
+for efile in glob("entrance_*.osm"):
+    print("Parsing {}...".format(efile))
+    tree = ET.parse(efile)
+    root = tree.getroot()
+
+    for way in root.iter('way'):
+        way_id = way.get('id')
+        for ndref in way.findall("./nd"):
+            n_id = ndref.get('ref')
+            seg_id = links.lookup(n_id, 'start')
+            if(seg_id and seg_id != way_id):
+                print("Matched entrance link {} to segment {}".format(way_id, seg_id))
+                links.get(seg_id).dest = node.find('./tag[@k="name"]').get('v')
+
+print("Analyzing...", file=sys.stderr)
 hwys = HwySet(hwy_segs, links)
 for name in hwy_names:
     hwys.add_hwy(name)
