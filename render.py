@@ -86,7 +86,7 @@ class Highway:
         for idx in range(len(self.rows)):
             r = self.rows[idx]
             try:
-                self.rows[idx+1].adjust_offset(r)
+                r.adjust_offset(self.rows[idx+1])
             except IndexError:
                 pass
 
@@ -108,31 +108,35 @@ class Row:
         self.gs = dwg.gs
         self.hwy = hwy
 
-    def adjust_offset(self, last_row):
-        if(last_row):
-            lane_diff = len(self.lanes) - len(last_row.lanes)
+    def adjust_offset(self, next_row):
+        if(next_row):
+            lane_diff = len(next_row.lanes) - len(self.lanes)
             lane_adj = 0
-            for (idx, l) in enumerate(last_row.links):
+            print(lane_diff)
+            for (idx, l) in enumerate(self.links):
+                print(l)
                 if(isinstance(l, Entrance)):
                     if(lane_diff > 0):
-                        last_row.caps.append(idx)
+                        self.caps.append(idx)
                         lane_diff-=1
                         if(l.side == -1):
                             lane_adj -= 1
-            for (idx, l) in enumerate(self.links):
+            for (idx, l) in enumerate(next_row.links):
+                print(l)
                 if(isinstance(l, Exit)):
                     if(lane_diff < 0):
-                        self.caps.append(idx)
+                        next_row.caps.append(idx)
                         lane_diff+=1
                         if(l.side == -1):
                             lane_adj += 1
+            print(lane_diff, lane_adj)
             if(lane_diff):
-                rel_row = self if lane_diff < 0 else last_row
+                rel_row = next_row if lane_diff < 0 else self
                 rel_row.lane_diff = lane_diff
 
             # TODO: This will always eliminate rightmost lanes
             # Sometimes we might know that it's the left lane instead?
-            self.offset = last_row.offset + lane_adj
+            next_row.offset = self.offset + lane_adj
 
     def render(self, fmt, idx):
         self.idx = idx
