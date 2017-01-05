@@ -38,20 +38,20 @@ for way in root.iter('way'):
         links.add(seg)
 
 print("Getting entrance ways...", file=sys.stderr)
-
 for efile in glob("entrance_*.osm"):
     print("Parsing {}...".format(efile))
     tree = ET.parse(efile)
     root = tree.getroot()
 
     for way in root.iter('way'):
+        curseg = HwySeg(way, None)
         way_id = way.get('id')
         for ndref in way.findall("./nd"):
             n_id = ndref.get('ref')
             seg_id = links.lookup(n_id, 'start')
             if(seg_id and seg_id != way_id):
-                print("Matched entrance link {} to segment {}".format(way_id, seg_id))
-                links.get(seg_id).dest = node.find('./tag[@k="name"]').get('v')
+                #print("Matched entrance link {} to segment {}".format(way_id, seg_id))
+                links.get(seg_id).dest = curseg.get_tag('name', 'ref', 'destination', 'destination:ref')
 
 print("Analyzing...", file=sys.stderr)
 hwys = HwySet(hwy_segs, links)

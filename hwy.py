@@ -58,16 +58,17 @@ class HwySeg:
     def get_number(self):
         return self.node_pool[self.start].name
 
-    def get_tag(self, k):
-        tagel = self.el.find("./tag[@k='{}']".format(k))
-        # I'm not sure why this is necessary?
-        # Maybe it's not?
-        if(hasattr(tagel, 'get')):
-            return tagel.get('v')
-        elif(hasattr(tagel, 'attrib')):
-            return tagel.attrib.get('v')
-        else:
-            return None
+    def get_tag(self, *args):
+        for k in args:
+            tagel = self.el.find("./tag[@k='{}']".format(k))
+            # I'm not sure why this is necessary?
+            # Maybe it's not?
+            if(hasattr(tagel, 'get')):
+                return tagel.get('v')
+            elif(hasattr(tagel, 'attrib')):
+                return tagel.attrib.get('v')
+
+        return None
 
     def get_ang(self, link_type, start_node = None):
         rev = (link_type == 'entrance')
@@ -170,8 +171,8 @@ class Hwy:
             while(curseg):
                 for (t, id) in curseg.links:
                     if(t == 'entrance'):
-                        seg = self.parent.links.get(id)
-                        print(seg.start)
+                        link = self.parent.links.get(id)
+                        print(link.start)
                 curseg = curseg.next
 
 class HwySet:
@@ -192,6 +193,10 @@ class HwySet:
 
     def get_hwy(self, name):
         return self.hwys[name]
+
+    def dump_entrance_nodes(self):
+        for hwy in self.hwys.values():
+            hwy.dump_entrance_nodes()
 
 class SegIndex:
     def __init__(self, segment_by = None, dedup = False):
@@ -240,6 +245,7 @@ class SegIndex:
                 cur_list[getattr(seg, cur_idx)] = seg.id
 
     def lookup(self, node_id, idx, segment = None):
+        node_id = int(node_id)
         lookup = self.idx[idx]
         if(segment):
             lookup = lookup[segment]
