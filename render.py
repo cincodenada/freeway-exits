@@ -110,26 +110,32 @@ class Row:
 
     def adjust_offset(self, next_row):
         if(next_row):
+            # Is there a difference in lanes between this lane and next?
             lane_diff = len(next_row.lanes) - len(self.lanes)
             lane_adj = 0
-            print(lane_diff)
+
+            # Check if we already have something that adds a lane
+            # (Entrances, or Exits for flipped highways)
             for (idx, l) in enumerate(self.links):
-                print(l)
-                if(isinstance(l, Entrance)):
+                if(isinstance(l, Exit if self.hwy.flipped else Entrance)):
+                    # If we have one and need a lane added, use it
                     if(lane_diff > 0):
                         self.caps.append(idx)
                         lane_diff-=1
+                        # If it's a left-side lane, it'll eat up one col of offset
                         if(l.side == -1):
                             lane_adj -= 1
+            # ...and, in the next lane, for something that removes a lane
             for (idx, l) in enumerate(next_row.links):
-                print(l)
-                if(isinstance(l, Exit)):
+                if(isinstance(l, Entrance if self.hwy.flipped else Exit)):
                     if(lane_diff < 0):
                         next_row.caps.append(idx)
                         lane_diff+=1
+                        # Left-side removers will leave empty below them, adding a col of offset
                         if(l.side == -1):
                             lane_adj += 1
-            print(lane_diff, lane_adj)
+
+            # If we still have a difference, note it so we can add a joiner
             if(lane_diff):
                 rel_row = next_row if lane_diff < 0 else self
                 rel_row.lane_diff = lane_diff
