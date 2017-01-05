@@ -44,6 +44,10 @@ class Ramp(Symbol):
             fill=self.cap_color,
         ))
 
+        cover_line = self.dwg.line((0,0),(0,1-self.radius))
+        cover_line.stroke(color='gray', width=0.05)
+        self.g.add(cover_line)
+
         ramp_outline = self.dwg.path(d=('M',0,0))
         ramp_outline.push('c',
             0, self.radius*self.bez_circle_dist,
@@ -139,6 +143,10 @@ class LaneJoiner(Symbol):
         path.push('l',-1,0)
         path.fill(color='gray')
         self.g.add(path)
+
+        cover_line = self.dwg.line((0,0),(0,1))
+        cover_line.stroke(color='gray', width=0.05)
+        self.g.add(cover_line)
 
         path = self.dwg.path(d=('M',0,0))
         path.push('l',1,1)
