@@ -92,11 +92,15 @@ class LaneEnd(Symbol):
             1 - self.bez_circle_dist, 1,
             1, 1
         )
+        path.push('l',1,0)
+        path.push('m',0,-1)
+        path.push('l',-1,0)
         path.fill(opacity=0)
         path.stroke(color='black',width=0.05)
         self.g.add(path)
 
 class Lane(Symbol):
+    dash_len = 0.25
     def __init__(self, dwg, flipx=False, flipy=False, edge=0):
         self.edge = edge
         super().__init__(dwg, flipx, flipy)
@@ -115,7 +119,7 @@ class Lane(Symbol):
             stroke_width=0.05
         )
         if(self.edge != -1):
-            left_side.dasharray([0.1,0.1])
+            left_side.dasharray([self.dash_len,self.dash_len])
         self.g.add(left_side)
 
         right_side = self.dwg.line(
@@ -125,7 +129,7 @@ class Lane(Symbol):
             stroke_width=0.05
         )
         if(self.edge != 1):
-            right_side.dasharray([0.1,0.1])
+            right_side.dasharray([self.dash_len,self.dash_len])
         self.g.add(right_side)
 
 class LaneJoiner(Symbol):
