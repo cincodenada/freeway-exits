@@ -342,11 +342,19 @@ class LaneJoiner(Link):
             lines = '-'*(abs(self.diff)-1)
             return ('/' + lines if(self.direction == self.get_flipside()) else lines + '\\')
 
-        return self.get_symbol(
+        relpos = self.get_relpos()
+        pos = self.get_pos(idx)
+        sym = self.get_symbol(
             '_'.join([
                 'lane',
                 'split' if self.diff > 0 else 'join',
                 self.sidename[self.side]
             ]),
-            self.get_relpos(), self.get_pos(idx)
+            relpos, pos
         )
+        width = abs(self.diff)
+        xpos = relpos[0] + pos
+        sym.scale(width, 1)
+        if(width > 1):
+            sym.translate(-xpos*(1-1/width), 0)
+        return sym
