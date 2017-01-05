@@ -11,7 +11,7 @@ root = tree.getroot()
 hwys = {}
 hwy_names = set()
 
-hwy_segs = SegIndex('name', dedup=True)
+hwy_segs = SegIndex('get_hwys', dedup=True)
 links = SegIndex()
 link_entrances = SegIndex()
 
@@ -33,7 +33,8 @@ for way in root.iter('way'):
 
     if(seg.type == 'motorway'):
         hwy_segs.add(seg)
-        hwy_names.add(seg.name)
+        for name in seg.get_hwys():
+            hwy_names.add(name)
     elif(seg.type == 'motorway_link'):
         links.add(seg)
 

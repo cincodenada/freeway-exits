@@ -49,6 +49,12 @@ class HwySeg:
         self.next = None
         self.links = []
 
+    def get_hwys(self):
+        if(self.name):
+            return self.name.split(';')
+        else:
+            return [None]
+
     def describe_link(self, trunk):
         fromto = 'to' if trunk.get_link_type(self) == 'exit' else 'from'
         side = trunk.get_side(self)
@@ -185,7 +191,8 @@ class HwySet:
         self.hwys[name] = Hwy(name, self)
 
     def add_seg(self, seg):
-        self.hwys[seg.name].add_seg(seg)
+        for name in seg.get_hwys():
+            self.hwys[name].add_seg(seg)
 
     def add_link(self, link):
         for (name, hwy) in self.hwys.items():
@@ -217,32 +224,41 @@ class SegIndex:
         for cur_idx in self.idx:
             if(self.segment_by):
                 segment_val = getattr(seg, self.segment_by)
-                if(segment_val not in self.idx[cur_idx]):
-                    self.idx[cur_idx][segment_val] = {}
-                cur_list = self.idx[cur_idx][segment_val]
-            else:
-                cur_list = self.idx[cur_idx]
+                if(callable(segment_val)):
+                    segment_val = segment_val()
+                else:
+                    segment_val = [segment_val]
 
-            if(self.dedup):
-                try:
-                    prevseg = self.get(cur_list[getattr(seg, cur_idx)])
-                    if(seg.lanes > prevseg.lanes):
-                        prevseg.discard = True
-                        cur_list[getattr(seg, cur_idx)] = seg.id
-                        if(cur_idx == 'start'):
-                            seg.add_lanes = prevseg.lanes + prevseg.add_lanes
-                        else:
-                            seg.remove_lanes = prevseg.lanes + prevseg.remove_lanes
-                    else:
-                        seg.discard = True
-                        if(cur_idx == 'start'):
-                            prevseg.add_lanes += seg.lanes
-                        else:
-                            prevseg.remove_lanes += seg.lanes
-                except KeyError:
-                    cur_list[getattr(seg, cur_idx)] = seg.id
+                for val in segment_val:
+                    if(val not in self.idx[cur_idx]):
+                        self.idx[cur_idx][val] = {}
+                    self.add_to_list(cur_idx, self.idx[cur_idx][val], seg)
             else:
+                self.add_to_list(cur_idx, self.idx[cur_idx], seg)
+
+    def add_to_list(self, cur_idx, cur_list, seg):
+        if(self.dedup):
+            try:
+                prevseg = self.get(cur_list[getattr(seg, cur_idx)])
+                if(seg.lanes > prevseg.lanes):
+                    prevseg.discard = True
+                    cur_list[getattr(seg, cur_idx)] = seg.id
+                    if(cur_idx == 'start'):
+                        seg.add_lanes = prevseg.lanes + prevseg.add_lanes
+                    else:
+                        seg.remove_lanes = prevseg.lanes + prevseg.remove_lanes
+                else:
+                    seg.discard = True
+                    if(cur_idx == 'start'):
+                        prevseg.add_lanes += seg.lanes
+                    else:
+                        prevseg.remove_lanes += seg.lanes
+            except KeyError:
                 cur_list[getattr(seg, cur_idx)] = seg.id
+        else:
+            cur_list[getattr(seg, cur_idx)] = seg.id
+
+
 
     def lookup(self, node_id, idx, segment = None):
         node_id = int(node_id)
