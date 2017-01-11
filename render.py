@@ -23,6 +23,16 @@ class Diagram:
         self.add_sym("exit_cap_L", sym.LaneEnd(self.svg, True, False, cap_color='red'))
         self.add_sym("entrance_cap_L", sym.LaneEnd(self.svg, True, True, cap_color='green'))
 
+        self.add_sym("entrance_flip_R", sym.Ramp(self.svg, False, False, cap_color='green'))
+        self.add_sym("exit_flip_R", sym.Ramp(self.svg, False, True, cap_color='red'))
+        self.add_sym("entrance_flip_L", sym.Ramp(self.svg, True, False, cap_color='green'))
+        self.add_sym("exit_flip_L", sym.Ramp(self.svg, True, True, cap_color='red'))
+
+        self.add_sym("entrance_cap_flip_R", sym.LaneEnd(self.svg, False, False, cap_color='green'))
+        self.add_sym("exit_cap_flip_R", sym.LaneEnd(self.svg, False, True, cap_color='red'))
+        self.add_sym("entrance_cap_flip_L", sym.LaneEnd(self.svg, True, False, cap_color='green'))
+        self.add_sym("exit_cap_flip_L", sym.LaneEnd(self.svg, True, True, cap_color='red'))
+
         self.add_sym("lane_mid", sym.Lane(self.svg))
         self.add_sym("lane_L", sym.Lane(self.svg, edge=-1))
         self.add_sym("lane_R", sym.Lane(self.svg, edge=1))
@@ -274,10 +284,11 @@ class Exit(Ramp):
 
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
-        nameparts = []
-        nameparts.append('entrance' if self.row.hwy.flipped else 'exit')
+        nameparts = ['exit']
         if(is_cap):
             nameparts.append('cap')
+        if(self.row.hwy.flipped):
+            nameparts.append('flip')
         nameparts.append(self.sidename[self.side])
         return self.get_symbol(
             '_'.join(nameparts),
@@ -296,10 +307,11 @@ class Entrance(Ramp):
 
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
-        nameparts = []
-        nameparts.append('exit' if self.row.hwy.flipped else 'entrance')
+        nameparts = ['entrance']
         if(is_cap):
             nameparts.append('cap')
+        if(self.row.hwy.flipped):
+            nameparts.append('flip')
         nameparts.append(self.sidename[self.side])
         return self.get_symbol(
             '_'.join(nameparts),
