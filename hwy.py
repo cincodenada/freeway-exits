@@ -117,11 +117,11 @@ class HwySeg:
         start_node = self.nodes.index(center_id)
         diff = link.get_ang(link_type) - self.get_ang(link_type, start_node)
 
-        if(abs(diff) == 180):
+        if(abs(diff) == math.radians(180)):
             raise ValueError("Exit 180 degrees from road!")
 
-        if(abs(diff) > 180):
-            diff -= math.copysign(360,diff)
+        if(abs(diff) > math.radians(180)):
+            diff -= math.copysign(math.radians(360),diff)
 
         return diff
 
