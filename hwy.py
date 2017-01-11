@@ -56,10 +56,13 @@ class HwySeg:
             return [None]
 
     def describe_link(self, trunk):
-        fromto = 'to' if trunk.get_link_type(self) == 'exit' else 'from'
-        side = trunk.get_side(self)
+        link_type = trunk.get_link_type(self)
         dest = self.dest if self.dest else '???'
-        return '{} {} {}'.format(self.get_number(), fromto, dest, side)
+        if(link_type == 'exit'):
+            side = trunk.get_side(self)
+            return '{}: {}'.format(self.get_number(), dest)
+        else:
+            return dest
 
     def get_number(self):
         return self.node_pool[self.start].name
