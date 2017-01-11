@@ -69,25 +69,37 @@ for start in hwys.get_hwy('I 5').starts:
     curseg = start
     lastlanes = start.lanes
     lastlinks = len(start.links)
-    last_link_diff = 0
+    link_add = 0
+    link_sub = 0
     extra_lanes = 0
     base_pos = 0
-    while curseg.next:
+    while curseg:
         extra_lanes += curseg.add_lanes
         curlanes = curseg.lanes + extra_lanes
+        print("Lanes/links:", lastlanes, curlanes, len(curseg.links))
         if(lastlanes != curlanes or len(curseg.links)):
             lane_diff = (curlanes - lastlanes)
 
             if(len(curseg.links)):
-                for (type, link_id) in curseg.links:
+                for (idx, linkdata) in enumerate(curseg.links):
+                    (type, link_id) = linkdata
                     link = links.get(link_id)
                     side = curseg.get_side(link)
 
+                    # Exits apply to this row
+                    if(type == 'exit'):
+                        link_sub = 1
+                    else:
+                        link_sub = 0
+
+                    print(link.describe_link(curseg))
+                    print("Diff:", lane_diff, -link_sub, link_add)
                     # Add an extra row if we have lane changes
                     # that aren't accounted for by exits/entrances
-                    if(lane_diff and lane_diff > last_link_diff):
+                    if(idx == 0 and lane_diff < 0 and -lane_diff > link_sub):
+                        print("Adding buffer row...")
                         row = curhwy.add_row()
-                        for n in range(lastlanes):
+                        for n in range(curlanes):
                             row.add_lane(render.Lane())
 
                     row = curhwy.add_row()
@@ -96,11 +108,21 @@ for start in hwys.get_hwy('I 5').starts:
 
                     if(type == 'exit'):
                         row.add_link(render.Exit(side, link.get_number()))
-                        last_link_diff = -1
                     else:
                         row.add_link(render.Entrance(side, link.get_number()))
-                        last_link_diff = 1
                     row.add_link(render.Label(side, type, link.describe_link(curseg)))
+
+                    if(idx == len(curseg.links)-1 and lane_diff > 0 and lane_diff > link_add):
+                        print("Adding buffer row...")
+                        row = curhwy.add_row()
+                        for n in range(lastlanes):
+                            row.add_lane(render.Lane())
+
+                    # Entrances apply to next row
+                    if(type == 'entrance'):
+                        link_add = 1
+                    else:
+                        link_add = 0
 
                     # Update lastlanes for entrance rendering
                     lastlanes = curlanes
