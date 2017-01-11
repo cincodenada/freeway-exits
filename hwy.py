@@ -1,4 +1,6 @@
 import math
+import sys
+from collections import deque
 
 class Node:
     def __init__(self, xmlobj):
@@ -181,7 +183,21 @@ class Hwy:
                 for (t, id) in curseg.links:
                     if(t == 'entrance'):
                         link = self.parent.links.get(id)
-                        print(link.start)
+                        first_link = link
+                        last_ids = deque(maxlen=20)
+                        numloops = 0
+                        while(self.parent.links.lookup(first_link.start, 'end')):
+                            link_id = self.parent.links.lookup(first_link.start, 'end')
+                            last_ids.append(link_id)
+                            first_link = self.parent.links.get(link_id)
+                            numloops+=1
+                            if(numloops > 100):
+                                print("I seem to have found a loop...", file=sys.stderr)
+                                print(last_ids, file=sys.stderr)
+                                break
+
+
+                        print(first_link.start)
                 curseg = curseg.next
 
 class HwySet:
