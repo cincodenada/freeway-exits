@@ -128,9 +128,13 @@ for start in hwys.get_hwy('I 5').starts:
                     # Update lastlanes for entrance rendering
                     lastlanes = curlanes
             else:
-                # If we had links last time,
-                # Add a lane to make room for the expansion
-                if(lastlinks > 0):
+                if(lane_diff < 0 and -lane_diff > link_sub):
+                    print("Adding buffer row...")
+                    row = curhwy.add_row()
+                    for n in range(curlanes):
+                        row.add_lane(render.Lane())
+                elif(lane_diff > 0 and lane_diff > link_add):
+                    print("Adding buffer row...")
                     row = curhwy.add_row()
                     for n in range(lastlanes):
                         row.add_lane(render.Lane())
