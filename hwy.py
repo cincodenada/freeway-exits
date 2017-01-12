@@ -144,7 +144,6 @@ class HwySeg:
     def add_entrance(self, link):
         self.links.append(link)
 
-
 class Hwy:
     def __init__(self, name, parent):
         self.name = name
@@ -182,22 +181,8 @@ class Hwy:
             while(curseg):
                 for (t, id) in curseg.links:
                     if(t == 'entrance'):
-                        link = self.parent.links.get(id)
-                        first_link = link
-                        last_ids = deque(maxlen=20)
-                        numloops = 0
-                        while(self.parent.links.lookup(first_link.start, 'end')):
-                            link_id = self.parent.links.lookup(first_link.start, 'end')
-                            last_ids.append(link_id)
-                            first_link = self.parent.links.get(link_id)
-                            numloops+=1
-                            if(numloops > 100):
-                                print("I seem to have found a loop...", file=sys.stderr)
-                                print(last_ids, file=sys.stderr)
-                                break
-
-
-                        print(first_link.start)
+                        link = self.parent.links.lookup_end(id, 'start')
+                        print(link.start)
                 curseg = curseg.next
 
 class HwySet:
@@ -301,3 +286,20 @@ class SegIndex:
                     matches.append((link_type, seg_id))
 
         return matches
+
+    def lookup_end(self, link_id, direction, maxloop = 100):
+        relattr = 'start' if direction == 'end' else 'end'
+        cur_link = self.get(link_id)
+        last_ids = deque(maxlen=20)
+        numloops = 0
+        while(self.lookup(getattr(cur_link, relattr), direction)):
+            link_id = self.lookup(getattr(cur_link, relattr), direction)
+            last_ids.append(link_id)
+            cur_link = self.get(link_id)
+            numloops+=1
+            if(numloops > maxloop):
+                print("I seem to have found a loop...", file=sys.stderr)
+                print(last_ids, file=sys.stderr)
+                break
+
+        return cur_link
