@@ -51,8 +51,9 @@ for efile in glob("entrance_*.osm"):
             n_id = ndref.get('ref')
             seg_id = links.lookup(n_id, 'start')
             if(seg_id and seg_id != way_id):
-                #print("Matched entrance link {} to segment {}".format(way_id, seg_id))
-                links.lookup_end(seg_id, 'end').dest = curseg.get_tag('name', 'ref', 'destination', 'destination:ref')
+                end_link = links.lookup_end(seg_id, 'end')
+                print("Matched entrance link {} to segment {}".format(way_id, end_link.id))
+                end_link.dest = curseg.get_tag('name', 'ref')
 
 print("Analyzing...", file=sys.stderr)
 hwys = HwySet(hwy_segs, links)

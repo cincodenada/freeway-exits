@@ -289,13 +289,14 @@ class SegIndex:
 
     def lookup_end(self, link_id, direction, maxloop = 100):
         relattr = 'start' if direction == 'end' else 'end'
-        cur_link = self.get(link_id)
         last_ids = deque(maxlen=20)
         numloops = 0
-        while(self.lookup(getattr(cur_link, relattr), direction)):
-            link_id = self.lookup(getattr(cur_link, relattr), direction)
+        while(link_id):
             last_ids.append(link_id)
             cur_link = self.get(link_id)
+            cur_node = getattr(cur_link, relattr)
+            print("Looking for {} of segment {} at {}...".format(direction, link_id, cur_node))
+            link_id = self.lookup(getattr(cur_link, direction), relattr)
             numloops+=1
             if(numloops > maxloop):
                 print("I seem to have found a loop...", file=sys.stderr)
