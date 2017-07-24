@@ -8,7 +8,7 @@ class Diagram:
     hwy_spacing = 750
     def __init__(self, gridsize):
         self.gs = gridsize
-        self.svg = svgwrite.Drawing(filename='out.svg', debug=True)
+        self.svg = svgwrite.Drawing(debug=True)
         self.hwys = []
         self.cur_horiz = 0
         self.hwy_offset = int(self.hwy_spacing/gridsize)
@@ -75,8 +75,8 @@ class Diagram:
             if(fmt == 'text'):
                 print('='*(self.hwy_offset+self.text_buffer))
 
-    def save(self):
-        return self.svg.save()
+    def save(self, filename):
+        return self.svg.saveas(filename)
 
 class Highway:
     def __init__(self, diagram):

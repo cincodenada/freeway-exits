@@ -3,6 +3,11 @@ from hwy import Node, HwySeg, Hwy, HwySet, SegIndex
 import render
 from glob import glob
 import sys
+import argparse
+
+parser = argparse.ArgumentParser(description = "Build a visualization of highways from OSM data")
+parser.add_argument('--svg', help="SVG file to output to")
+args = parser.parse_args()
 
 tree = ET.parse('motorway.osm')
 root = tree.getroot()
@@ -150,5 +155,8 @@ for start in hwys.get_hwy('I 5').starts:
         curseg = curseg.next
 
 dwg.render('text')
-dwg.render()
-dwg.save()
+if(args.svg):
+    print("Rendering SVG...")
+    dwg.render()
+    print("Writing...")
+    dwg.save(args.svg)
