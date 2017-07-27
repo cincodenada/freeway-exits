@@ -46,12 +46,11 @@ class Network:
             except AttributeError:
                 continue
 
-            seg = HwySeg(way, self.nodes)
-
-            if(seg.type == 'motorway'):
-                self.hwy_segs.add(seg)
-            elif(seg.type == 'motorway_link'):
-                self.links.add(seg)
+            seg_type = way.find("./tag[@k='highway']").get('v')
+            if(seg_type == 'motorway'):
+                self.hwy_segs.add(HwySeg(way, self.nodes))
+            elif(seg_type == 'motorway_link'):
+                self.links.add(LinkSeg(way, self.nodes))
 
     def parse_aux_ways(self, osmTree):
         for way in osmTree.iter('way'):
@@ -71,7 +70,7 @@ class Network:
             s.update_links(self.hwy_segs, self.links)
 
 
-class HwySeg:
+class Seg:
     lane_keys = ['turn','hov','hgv','bus','motor_vehicle','motorcycle']
 
     def __init__(self, el, node_pool):
@@ -104,23 +103,12 @@ class HwySeg:
 
         self.prev = None
         self.next = None
-        self.links = []
-
-        self.dest_links = {}
 
     def get_hwys(self):
         if(self.name):
             return self.name.split(';')
         else:
             return [None]
-
-    def get_dest(self):
-        if self.dest:
-            return self.dest
-        if self.dest_links.values():
-            return '/'.join([l.get_tag('name', 'ref') for l in self.dest_links.values() if l.get_tag('name', 'ref')])
-
-        return '???'
 
     def is_end(self):
         return (self.prev and not self.next)
@@ -135,29 +123,6 @@ class HwySeg:
         myIndex = linkIndex if self.is_link() else hwyIndex
         self.next = myIndex.lookup_seg(self.end, 'start')
         self.prev = myIndex.lookup_seg(self.start, 'end')
-
-        # Connect links if we're a highway segment
-        if not self.is_link():
-            self.links = []
-            for l in linkIndex.lookup_all(self.nodes):
-                link = linkIndex.get(l[1])
-                # On borders:
-                #  - exits get appended to next segment
-                #  - entrances get appended to previous segment
-                if link.start != self.end and link.end != self.start:
-                    self.links.append(l)
-
-    def describe_link(self, trunk):
-        link_type = trunk.get_link_type(self)
-        dest = self.get_dest()
-        if(link_type == 'exit'):
-            side = trunk.get_side(self)
-            return '{}: {}'.format(self.get_number(), dest)
-        else:
-            return dest
-
-    def get_number(self):
-        return self.node_pool[self.start].name
 
     def get_tag(self, *args):
         for k in args:
@@ -189,16 +154,24 @@ class HwySeg:
         else:
             return None
 
+class HwySeg(Seg):
+    def __init__(self, el, node_pool):
+        super().__init__(el, node_pool)
 
-    def get_link_type(self, link):
-        if((link.start in self.nodes) and (link.start != self.end)):
-            return 'exit'
-        elif((link.end in self.nodes) and (link.end != self.start)):
-            return 'entrance'
-        else:
-            print(link.start, link.end)
-            print(self.nodes)
-            return None
+        self.links = []
+
+    def update_links(self, hwyIndex, linkIndex):
+        super().update_links(hwyIndex, linkIndex)
+
+        # Additionally, connect links
+        self.links = []
+        for l in linkIndex.lookup_all(self.nodes):
+            link = linkIndex.get(l[1])
+            # On borders:
+            #  - exits get appended to next segment
+            #  - entrances get appended to previous segment
+            if link.start != self.end and link.end != self.start:
+                self.links.append(l)
 
     def get_rel_ang(self, link):
         link_type = self.get_link_type(link)
@@ -217,6 +190,16 @@ class HwySeg:
 
         return diff
 
+    def get_link_type(self, link):
+        if((link.start in self.nodes) and (link.start != self.end)):
+            return 'exit'
+        elif((link.end in self.nodes) and (link.end != self.start)):
+            return 'entrance'
+        else:
+            print(link.start, link.end)
+            print(self.nodes)
+            return None
+
     def get_side(self, link):
         type = self.get_link_type(link)
         if(type is None):
@@ -234,11 +217,31 @@ class HwySeg:
     def add_entrance(self, link):
         self.links.append(link)
 
-class Exit(HwySeg):
-    pass
+class LinkSeg(Seg):
+    def __init__(self, el, node_pool):
+        super().__init__(el, node_pool)
 
-class Entrance(HwySeg):
-    pass
+        self.dest_links = {}
+
+    def get_dest(self):
+        if self.dest:
+            return self.dest
+        if self.dest_links.values():
+            return '/'.join([l.get_tag('name', 'ref') for l in self.dest_links.values() if l.get_tag('name', 'ref')])
+
+        return '???'
+
+    def describe_link(self, trunk):
+        link_type = trunk.get_link_type(self)
+        dest = self.get_dest()
+        if(link_type == 'exit'):
+            side = trunk.get_side(self)
+            return '{}: {}'.format(self.get_number(), dest)
+        else:
+            return dest
+
+    def get_number(self):
+        return self.node_pool[self.start].name
 
 class Hwy:
     def __init__(self, name, parent):
