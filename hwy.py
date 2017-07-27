@@ -22,19 +22,14 @@ class Network:
         self.nodes = {}
         self.hwys = {}
         self.links = SegIndex()
-        self.link_entrances = SegIndex()
-        self.hwy_names = set()
-        self.hwy_segs = SegIndex('get_hwys', merge=True)
+        self.hwy_segs = SegIndex(merge=True)
 
         self.parse_nodes()
         self.parse_ways()
 
-        self.hwys = HwySet(self.hwy_segs, self.links)
-        for name in self.hwy_names:
-            self.hwys.add_hwy(name)
+        self.link_ways()
 
-        for seg in self.hwy_segs.segs.values():
-            self.hwys.add_seg(seg)
+        self.hwys = HwySet(self.hwy_segs)
 
     def parse_nodes(self):
         print("Getting nodes...", file=sys.stderr)
@@ -55,8 +50,6 @@ class Network:
 
             if(seg.type == 'motorway'):
                 self.hwy_segs.add(seg)
-                for name in seg.get_hwys():
-                    self.hwy_names.add(name)
             elif(seg.type == 'motorway_link'):
                 self.links.add(seg)
 
@@ -69,6 +62,14 @@ class Network:
                     end_link = self.links.lookup_end(match_id, 'end')
                     print("Matched entrance link {} to segment {} from {} via node {}".format(newseg.id, end_link.id, match_id, n_id))
                     end_link.dest_links[newseg.id] = newseg
+
+    def link_ways(self):
+        for s in self.hwy_segs.segs.values():
+            s.update_links(self.hwy_segs, self.links)
+
+        for s in self.links.segs.values():
+            s.update_links(self.hwy_segs, self.links)
+
 
 class HwySeg:
     lane_keys = ['turn','hov','hgv','bus','motor_vehicle','motorcycle']
@@ -120,6 +121,31 @@ class HwySeg:
             return '/'.join([l.get_tag('name', 'ref') for l in self.dest_links.values() if l.get_tag('name', 'ref')])
 
         return '???'
+
+    def is_end(self):
+        return (self.prev and not self.next)
+
+    def is_start(self):
+        return (self.next and not self.prev)
+
+    def is_link(self):
+        return (self.type == 'motorway_link')
+
+    def update_links(self, hwyIndex, linkIndex):
+        myIndex = linkIndex if self.is_link() else hwyIndex
+        self.next = myIndex.lookup_seg(self.end, 'start')
+        self.prev = myIndex.lookup_seg(self.start, 'end')
+
+        # Connect links if we're a highway segment
+        if not self.is_link():
+            self.links = []
+            for l in linkIndex.lookup_all(self.nodes):
+                link = linkIndex.get(l[1])
+                # On borders:
+                #  - exits get appended to next segment
+                #  - entrances get appended to previous segment
+                if link.start != self.end and link.end != self.start:
+                    self.links.append(l)
 
     def describe_link(self, trunk):
         link_type = trunk.get_link_type(self)
@@ -223,23 +249,10 @@ class Hwy:
         self.parent = parent
 
     def add_seg(self, seg):
-        nextid = self.lookup(seg.end, 'start')
-        if(nextid):
-            seg.next = self.parent.segs.get(nextid)
-        previd = self.lookup(seg.start, 'end')
-        if(previd):
-            seg.prev = self.parent.segs.get(previd)
-
-        if(previd and not nextid):
-            self.ends.append(seg)
-        elif(nextid and not previd):
+        if(seg.is_start()):
             self.starts.append(seg)
-
-        seg.links = []
-        for l in self.parent.links.lookup_all(seg.nodes):
-            link = self.parent.links.get(l[1])
-            if link.start != seg.end and link.end != seg.start:
-                seg.links.append(l)
+        elif(seg.is_end()):
+            self.ends.append(seg)
 
     def lookup(self, seg_id, idx):
         return self.parent.segs.lookup(seg_id, idx, self.name)
@@ -256,21 +269,21 @@ class Hwy:
                 curseg = curseg.next
 
 class HwySet:
-    def __init__(self, segs, links):
+    def __init__(self, segs):
         self.hwys = {}
-        self.segs = segs
-        self.links = links
+        self.seg_pool = segs
+
+        for s in self.seg_pool.segs.values():
+            self.add_seg(s)
 
     def add_hwy(self, name):
         self.hwys[name] = Hwy(name, self)
 
     def add_seg(self, seg):
         for name in seg.get_hwys():
+            if name not in self.hwys:
+                self.add_hwy(name)
             self.hwys[name].add_seg(seg)
-
-    def add_link(self, link):
-        for (name, hwy) in self.hwys.items():
-            hwy.add_link(link)
 
     def get_hwy(self, name):
         return self.hwys[name]
@@ -352,6 +365,13 @@ class SegIndex:
 
         if(node_id in lookup):
             return lookup[node_id]
+        else:
+            return None
+
+    def lookup_seg(self, node_id, idx, partition=None):
+        res_id = self.lookup(node_id, idx, partition)
+        if res_id:
+            return self.get(res_id)
         else:
             return None
 
