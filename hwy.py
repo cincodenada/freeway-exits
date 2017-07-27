@@ -70,7 +70,7 @@ class Network:
                 if(seg_id and seg_id != way_id):
                     end_link = self.links.lookup_end(seg_id, 'end')
                     print("Matched entrance link {} to segment {} from {} via node {}".format(way_id, end_link.id, seg_id, n_id))
-                    end_link.dest = curseg.get_tag('name', 'ref')
+                    end_link.dest_links[way_id] = curseg
 
 
 class HwySeg:
@@ -108,15 +108,25 @@ class HwySeg:
         self.next = None
         self.links = []
 
+        self.dest_links = {}
+
     def get_hwys(self):
         if(self.name):
             return self.name.split(';')
         else:
             return [None]
 
+    def get_dest(self):
+        if self.dest:
+            return self.dest
+        if self.dest_links.values():
+            return '/'.join([l.get_tag('name', 'ref') for l in self.dest_links.values() if l.get_tag('name', 'ref')])
+
+        return '???'
+
     def describe_link(self, trunk):
         link_type = trunk.get_link_type(self)
-        dest = self.dest if self.dest else '???'
+        dest = self.get_dest()
         if(link_type == 'exit'):
             side = trunk.get_side(self)
             return '{}: {}'.format(self.get_number(), dest)
