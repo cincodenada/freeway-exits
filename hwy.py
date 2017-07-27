@@ -1,6 +1,6 @@
 import math
 import sys
-from collections import deque
+from collections import defaultdict, deque
 
 class Node:
     def __init__(self, xmlobj):
@@ -24,7 +24,7 @@ class Network:
         self.links = SegIndex()
         self.link_entrances = SegIndex()
         self.hwy_names = set()
-        self.hwy_segs = SegIndex('get_hwys', dedup=True)
+        self.hwy_segs = SegIndex('get_hwys', merge=True)
 
         self.parseNodes()
         self.parseWays()
@@ -275,14 +275,14 @@ class HwySet:
 class SegIndex:
     no_seg = '_all_'
 
-    def __init__(self, segment_by = None, dedup = False):
+    def __init__(self, partition_by = None, merge = False):
         self.segs = {}
-        self.idx = {
-            'start': {},
-            'end': {},
+        self.indexes = {
+            'start': defaultdict(dict),
+            'end': defaultdict(dict),
         }
-        self.segment_by = segment_by
-        self.dedup = dedup
+        self.partition_by = partition_by
+        self.merge = merge
 
     def get(self, id):
         return self.segs[id]
@@ -290,63 +290,71 @@ class SegIndex:
     def add(self, seg):
         self.segs[seg.id] = seg
 
-        for cur_idx in self.idx:
-            if(self.segment_by):
-                segment_val = getattr(seg, self.segment_by)
-                if(callable(segment_val)):
-                    segment_val = segment_val()
-                else:
-                    segment_val = [segment_val]
-
-                for val in segment_val:
-                    if(val not in self.idx[cur_idx]):
-                        self.idx[cur_idx][val] = {}
-                    self.add_to_list(cur_idx, self.idx[cur_idx][val], seg)
+        for idx_key in self.indexes:
+            if(self.partition_by):
+                for val in self.get_partitions(seg):
+                    self.add_to_idx(idx_key, seg, part_val=val)
             else:
-                self.add_to_list(cur_idx, self.idx[cur_idx], seg)
+                self.add_to_idx(idx_key, seg)
 
-    def add_to_list(self, cur_idx, cur_list, seg):
-        if(self.dedup):
-            try:
-                prevseg = self.get(cur_list[getattr(seg, cur_idx)])
-                if(seg.lanes > prevseg.lanes):
-                    prevseg.discard = True
-                    cur_list[getattr(seg, cur_idx)] = seg.id
-                    if(cur_idx == 'start'):
-                        seg.add_lanes = prevseg.lanes + prevseg.add_lanes
-                    else:
-                        seg.remove_lanes = prevseg.lanes + prevseg.remove_lanes
-                else:
-                    seg.discard = True
-                    if(cur_idx == 'start'):
-                        prevseg.add_lanes += seg.lanes
-                    else:
-                        prevseg.remove_lanes += seg.lanes
-            except KeyError:
-                cur_list[getattr(seg, cur_idx)] = seg.id
+    def get_partitions(self, seg):
+        part_val = getattr(seg, self.partition_by)
+        if(callable(part_val)):
+            return part_val()
         else:
-            cur_list[getattr(seg, cur_idx)] = seg.id
+            return [part_val]
 
+    def add_to_idx(self, idx_key, seg, part_val=None):
+        if not part_val:
+            part_val = self.no_seg
 
+        cur_idx = self.indexes[idx_key][part_val]
 
-    def lookup(self, node_id, idx, segment = None):
+        key = getattr(seg, idx_key)
+        if(self.merge):
+            try:
+                # Deal with merges/splits, widest gets priority
+                prevseg = self.get(cur_idx[key])
+                if(seg.lanes > prevseg.lanes):
+                    seg = self.merge_lanes(seg, prevseg, idx_key)
+                else:
+                    seg = self.merge_lanes(prevseg, seg, idx_key)
+            except KeyError:
+                pass
+
+        cur_idx[key] = seg.id
+
+    # TODO: Do we need to worry about segments in the middle here?
+    def merge_lanes(self, main, branch, merge_point):
+        branch.discard = True
+        if(merge_point == 'start'):
+            # Start of split lanes, add all previous lanes to our additional lanes
+            main.add_lanes = branch.lanes + branch.add_lanes
+        else:
+            # End of split, we're downsizing
+            main.remove_lanes = branch.lanes + branch.remove_lanes
+
+        return main
+
+    def lookup(self, node_id, idx, partition=None):
+        if not partition:
+            partition = self.no_seg
+
         node_id = int(node_id)
-        lookup = self.idx[idx]
-        if(segment):
-            lookup = lookup[segment]
+        lookup = self.indexes[idx][partition]
 
         if(node_id in lookup):
             return lookup[node_id]
         else:
             return None
 
-    def lookup_all(self, node_ids, segment = None):
+    def lookup_all(self, node_ids, partition = None):
         matches = []
         for node_id in node_ids:
-            for (idx_type, cur_idx) in self.idx.items():
+            for idx_type in self.indexes.keys():
                 link_type = 'exit' if idx_type == 'start' else 'entrance'
 
-                seg_id = self.lookup(node_id, idx_type, segment)
+                seg_id = self.lookup(node_id, idx_type, partition)
                 if(seg_id):
                     matches.append((link_type, seg_id))
 
