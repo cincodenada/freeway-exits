@@ -17,7 +17,7 @@ print("Getting entrance ways...", file=sys.stderr)
 for efile in glob("entrance_*.osm"):
     print("Parsing {}...".format(efile))
     tree = ET.parse(efile)
-    net.parseAuxWays(tree.getroot())
+    net.parse_aux_ways(tree.getroot())
 
 dwg = render.Diagram(20)
 for start in net.hwys.get_hwy('I 5').starts:

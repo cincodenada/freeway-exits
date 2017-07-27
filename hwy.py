@@ -26,8 +26,8 @@ class Network:
         self.hwy_names = set()
         self.hwy_segs = SegIndex('get_hwys', merge=True)
 
-        self.parseNodes()
-        self.parseWays()
+        self.parse_nodes()
+        self.parse_ways()
 
         self.hwys = HwySet(self.hwy_segs, self.links)
         for name in self.hwy_names:
@@ -36,13 +36,13 @@ class Network:
         for seg in self.hwy_segs.segs.values():
             self.hwys.add_seg(seg)
 
-    def parseNodes(self):
+    def parse_nodes(self):
         print("Getting nodes...", file=sys.stderr)
         for n in self.xml.iter('node'):
             curnode = Node(n)
             self.nodes[curnode.id] = curnode
 
-    def parseWays(self):
+    def parse_ways(self):
         print("Getting ways...", file=sys.stderr)
         for way in self.xml.iter('way'):
             try:
@@ -60,7 +60,7 @@ class Network:
             elif(seg.type == 'motorway_link'):
                 self.links.add(seg)
 
-    def parseAuxWays(self, osmTree):
+    def parse_aux_ways(self, osmTree):
         for way in osmTree.iter('way'):
             newseg = HwySeg(way, None)
             for n_id in newseg.nodes:
