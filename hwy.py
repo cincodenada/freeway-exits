@@ -136,20 +136,19 @@ class Seg:
 
         return None
 
-    def get_ang(self, link_type, start_node = None):
-        rev = (link_type == 'entrance')
-        # Set default start_node depending on rev
-        if(start_node is None):
-            start_node = len(self.nodes)-1 if rev else 0
+    def get_ang(self, rev, pivot_node = None):
+        # Set pivot node depending on rev
+        if not pivot_node:
+            pivot_node = len(self.nodes)-1 if rev else 0
 
-        end_node = start_node-2 if rev else start_node+2
+        end_node = pivot_node-2 if rev else pivot_node+2
         step = -1 if rev else 1
         # Deal with list[1:-1:-1] not working as expected
         if end_node == -1:
             end_node = None
 
         if(len(self.nodes) >= 2):
-            p = [self.node_pool[n] for n in self.nodes[start_node:end_node:step]]
+            p = [self.node_pool[n] for n in self.nodes[pivot_node:end_node:step]]
             return math.atan2(p[1].lon - p[0].lon, p[1].lat - p[0].lat)
         else:
             return None
@@ -178,9 +177,10 @@ class HwySeg(Seg):
         if(link_type is None):
             return None
 
-        center_id = link.start if link_type == 'exit' else link.end
+        rev = (link_type == 'entrance')
+        center_id = link.end if rev else link.start
         start_node = self.nodes.index(center_id)
-        diff = link.get_ang(link_type) - self.get_ang(link_type, start_node)
+        diff = link.get_ang(rev) - self.get_ang(rev, start_node)
 
         if(abs(diff) == math.radians(180)):
             raise ValueError("Exit 180 degrees from road!")
