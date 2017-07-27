@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-from hwy import Node, HwySeg, Hwy, HwySet, SegIndex
+from hwy import Network
 import render
 from glob import glob
 import sys
@@ -10,66 +10,17 @@ parser.add_argument('--svg', help="SVG file to output to")
 args = parser.parse_args()
 
 tree = ET.parse('motorway.osm')
-root = tree.getroot()
+net = Network(tree.getroot())
 
-# Get ways
-hwys = {}
-hwy_names = set()
-
-hwy_segs = SegIndex('get_hwys', dedup=True)
-links = SegIndex()
-link_entrances = SegIndex()
-
-print("Getting nodes...", file=sys.stderr)
-nodes = {}
-for n in root.iter('node'):
-    curnode = Node(n)
-    nodes[curnode.id] = curnode
-
-print("Getting ways...", file=sys.stderr)
-for way in root.iter('way'):
-    try:
-        if(way.find("./tag[@k='oneway']").get('v') != 'yes'):
-            continue
-    except AttributeError:
-        continue
-
-    seg = HwySeg(way, nodes)
-
-    if(seg.type == 'motorway'):
-        hwy_segs.add(seg)
-        for name in seg.get_hwys():
-            hwy_names.add(name)
-    elif(seg.type == 'motorway_link'):
-        links.add(seg)
 
 print("Getting entrance ways...", file=sys.stderr)
 for efile in glob("entrance_*.osm"):
     print("Parsing {}...".format(efile))
     tree = ET.parse(efile)
-    root = tree.getroot()
-
-    for way in root.iter('way'):
-        curseg = HwySeg(way, None)
-        way_id = way.get('id')
-        for ndref in way.findall("./nd"):
-            n_id = ndref.get('ref')
-            seg_id = links.lookup(n_id, 'start')
-            if(seg_id and seg_id != way_id):
-                end_link = links.lookup_end(seg_id, 'end')
-                print("Matched entrance link {} to segment {}".format(way_id, end_link.id))
-                end_link.dest = curseg.get_tag('name', 'ref')
-
-print("Analyzing...", file=sys.stderr)
-hwys = HwySet(hwy_segs, links)
-for name in hwy_names:
-    hwys.add_hwy(name)
-
-for seg in hwy_segs.segs.values():
-    hwys.add_seg(seg)
+    net.parseAuxWays(tree.getroot())
 
 dwg = render.Diagram(20)
-for start in hwys.get_hwy('I 5').starts:
+for start in net.hwys.get_hwy('I 5').starts:
     curhwy = dwg.add_hwy()
 
     curseg = start
@@ -89,7 +40,7 @@ for start in hwys.get_hwy('I 5').starts:
             if(len(curseg.links)):
                 for (idx, linkdata) in enumerate(curseg.links):
                     (type, link_id) = linkdata
-                    link = links.get(link_id)
+                    link = net.links.get(link_id)
                     side = curseg.get_side(link)
 
                     # Exits apply to this row

@@ -16,6 +16,63 @@ class Node:
         except AttributeError:
             self.name = None
 
+class Network:
+    def __init__(self, osmTree):
+        self.xml = osmTree
+        self.nodes = {}
+        self.hwys = {}
+        self.links = SegIndex()
+        self.link_entrances = SegIndex()
+        self.hwy_names = set()
+        self.hwy_segs = SegIndex('get_hwys', dedup=True)
+
+        self.parseNodes()
+        self.parseWays()
+
+        self.hwys = HwySet(self.hwy_segs, self.links)
+        for name in self.hwy_names:
+            self.hwys.add_hwy(name)
+
+        for seg in self.hwy_segs.segs.values():
+            self.hwys.add_seg(seg)
+
+    def parseNodes(self):
+        print("Getting nodes...", file=sys.stderr)
+        for n in self.xml.iter('node'):
+            curnode = Node(n)
+            self.nodes[curnode.id] = curnode
+
+    def parseWays(self):
+        print("Getting ways...", file=sys.stderr)
+        for way in self.xml.iter('way'):
+            try:
+                if(way.find("./tag[@k='oneway']").get('v') != 'yes'):
+                    continue
+            except AttributeError:
+                continue
+
+            seg = HwySeg(way, self.nodes)
+
+            if(seg.type == 'motorway'):
+                self.hwy_segs.add(seg)
+                for name in seg.get_hwys():
+                    self.hwy_names.add(name)
+            elif(seg.type == 'motorway_link'):
+                self.links.add(seg)
+
+    def parseAuxWays(self, osmTree):
+        for way in osmTree.iter('way'):
+            curseg = HwySeg(way, None)
+            way_id = int(way.get('id'))
+            for ndref in way.findall("./nd"):
+                n_id = int(ndref.get('ref'))
+                seg_id = self.links.lookup(n_id, 'start')
+                if(seg_id and seg_id != way_id):
+                    end_link = self.links.lookup_end(seg_id, 'end')
+                    print("Matched entrance link {} to segment {} from {} via node {}".format(way_id, end_link.id, seg_id, n_id))
+                    end_link.dest = curseg.get_tag('name', 'ref')
+
+
 class HwySeg:
     lane_keys = ['turn','hov','hgv','bus','motor_vehicle','motorcycle']
 
@@ -144,6 +201,12 @@ class HwySeg:
     def add_entrance(self, link):
         self.links.append(link)
 
+class Exit(HwySeg):
+    pass
+
+class Entrance(HwySeg):
+    pass
+
 class Hwy:
     def __init__(self, name, parent):
         self.name = name
@@ -210,6 +273,8 @@ class HwySet:
             hwy.dump_entrance_nodes()
 
 class SegIndex:
+    no_seg = '_all_'
+
     def __init__(self, segment_by = None, dedup = False):
         self.segs = {}
         self.idx = {
