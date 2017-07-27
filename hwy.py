@@ -62,16 +62,13 @@ class Network:
 
     def parseAuxWays(self, osmTree):
         for way in osmTree.iter('way'):
-            curseg = HwySeg(way, None)
-            way_id = int(way.get('id'))
-            for ndref in way.findall("./nd"):
-                n_id = int(ndref.get('ref'))
-                seg_id = self.links.lookup(n_id, 'start')
-                if(seg_id and seg_id != way_id):
-                    end_link = self.links.lookup_end(seg_id, 'end')
-                    print("Matched entrance link {} to segment {} from {} via node {}".format(way_id, end_link.id, seg_id, n_id))
-                    end_link.dest_links[way_id] = curseg
-
+            newseg = HwySeg(way, None)
+            for n_id in newseg.nodes:
+                match_id = self.links.lookup(n_id, 'start')
+                if(match_id and match_id != newseg.id):
+                    end_link = self.links.lookup_end(match_id, 'end')
+                    print("Matched entrance link {} to segment {} from {} via node {}".format(newseg.id, end_link.id, match_id, n_id))
+                    end_link.dest_links[newseg.id] = newseg
 
 class HwySeg:
     lane_keys = ['turn','hov','hgv','bus','motor_vehicle','motorcycle']
