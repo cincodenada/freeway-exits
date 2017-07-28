@@ -40,7 +40,7 @@ class Network:
         self.nodes = {}
         self.hwys = {}
         self.link_segs = SegIndex()
-        self.hwy_segs = SegIndex(merge=True)
+        self.hwy_segs = SegIndex('get_hwys', merge=True)
 
         self.parse_nodes()
         self.parse_ways()
@@ -117,31 +117,38 @@ class Seg(OsmElm):
             lanedata = self.get_tag(key + ':lanes')
             self.lanedata[key] = lanedata.split('|') if lanedata else None
 
-        self.prev = None
-        self.next = None
-
     def get_hwys(self):
         if(self.name):
             return self.name.split(';')
         else:
             return [None]
 
-    def is_end(self):
-        return (self.prev and not self.next)
+    def is_end(self, hwy = None):
+        return (self.prev(hwy) and not self.next(hwy))
 
-    def is_start(self):
-        return (self.next and not self.prev)
+    def is_start(self, hwy = None):
+        return (self.next(hwy) and not self.prev(hwy))
 
     def is_link(self):
         return (self.type == 'motorway_link')
 
-    def update_links(self, hwyIndex, linkIndex):
-        myIndex = linkIndex if self.is_link() else hwyIndex
-        self.next = myIndex.lookup_seg(self.end, 'start')
-        self.prev = myIndex.lookup_seg(self.start, 'end')
+    def get_index(self):
+        raise NotImplementedError("Abstract method get_index not implemented")
 
+    def next(self, hwy = None):
+        if not hwy:
+            hwy = self.get_hwys()[0]
 
-        return None
+        return self.get_index().lookup_seg(self.end, 'start', hwy)
+
+    def prev(self, hwy = None):
+        if not hwy:
+            hwy = self.get_hwys()[0]
+
+        return self.get_index().lookup_seg(self.start, 'end', hwy)
+
+    def post_process(self, hwyIndex, linkIndex):
+        pass
 
     # Calculate the absolute angle of this element
     # In a direction (forward or rev) from a given pivot node
@@ -169,8 +176,11 @@ class HwySeg(Seg):
 
         self.links = []
 
-    def update_links(self, hwyIndex, linkIndex):
-        super().update_links(hwyIndex, linkIndex)
+    def get_index(self):
+        return self.network.hwy_segs
+
+    def post_process(self, hwyIndex, linkIndex):
+        super().post_process(hwyIndex, linkIndex)
 
         # Additionally, connect links
         self.links = []
@@ -233,6 +243,9 @@ class LinkSeg(Seg):
         self.dest = None
         self.dest_links = {}
 
+    def get_index(self):
+        return self.network.link_segs
+
     def get_junction(self, trunk):
         link_type = trunk.get_link_type(self)
         return self.start if (link_type == 'exit') else self.end
@@ -279,9 +292,9 @@ class Hwy:
         self.parent = parent
 
     def add_seg(self, seg):
-        if(seg.is_start()):
+        if(seg.is_start(self.name)):
             self.starts.append(seg)
-        elif(seg.is_end()):
+        elif(seg.is_end(self.name)):
             self.ends.append(seg)
 
     def lookup(self, seg_id, idx):
@@ -296,7 +309,7 @@ class Hwy:
                     if(t == 'entrance'):
                         link = self.parent.link_segs.lookup_end(id, 'start')
                         print(link.start)
-                curseg = curseg.next
+                curseg = curseg.next()
 
 class HwySet:
     def __init__(self, segs):

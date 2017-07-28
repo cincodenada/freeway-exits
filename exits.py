@@ -20,7 +20,8 @@ for efile in glob("entrance_*.osm"):
     net.parse_aux_ways(tree.getroot())
 
 dwg = render.Diagram(20)
-for start in net.hwys.get_hwy('I 5').starts:
+hwy = 'I 5'
+for start in net.hwys.get_hwy(hwy).starts:
     curhwy = dwg.add_hwy()
 
     curseg = start
@@ -103,7 +104,7 @@ for start in net.hwys.get_hwy('I 5').starts:
         lastlanes = curlanes
         lastlinks = len(curseg.links)
         extra_lanes -= curseg.remove_lanes
-        curseg = curseg.next
+        curseg = curseg.next(hwy)
 
 dwg.render('text')
 if(args.svg):
