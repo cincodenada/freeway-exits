@@ -77,7 +77,7 @@ class Network:
                 match_id = self.link_segs.lookup(n_id, 'start')
                 if(match_id and match_id != newseg.id):
                     end_link = self.link_segs.lookup_end(match_id, 'end')
-                    print("Matched entrance link {} to segment {} from {} via node {}".format(newseg.id, end_link.id, match_id, n_id))
+                    print("Matched entrance link {} to segment {} from {} via node {}".format(newseg.id, end_link.id, match_id, n_id), file=sys.stderr)
                     end_link.dest_links[newseg.id] = newseg
 
     def link_ways(self):
@@ -442,7 +442,7 @@ class SegIndex:
 
             cur_link = self.get(link_id)
             cur_node = getattr(cur_link, relattr)
-            print("Looking for {} of segment {} at {}...".format(direction, link_id, cur_node))
+            print("Looking for {} of segment {} at {}...".format(direction, link_id, cur_node), file=sys.stderr)
             link_id = self.lookup(getattr(cur_link, direction), relattr)
 
         return cur_link
