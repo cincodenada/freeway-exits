@@ -201,7 +201,16 @@ class HwySeg(Seg):
         # Additionally, connect links
         self.links = []
         for l in linkIndex.lookup_all(self.nodes):
-            link = linkIndex.get(l[1])
+            link = l[1]
+            # On borders:
+            #  - exits get appended to next segment
+            #  - entrances get appended to previous segment
+            if link.start != self.end and link.end != self.start:
+                self.links.append(l)
+
+        # Find connecting highways
+        for l in hwyIndex.lookup_all(self.nodes):
+            link = l[1]
             # On borders:
             #  - exits get appended to next segment
             #  - entrances get appended to previous segment
@@ -257,12 +266,14 @@ class HwySeg(Seg):
             types = ['entrance', 'exit'] if types == 'all' else [types]
 
         nodes = set()
-        for (t, id) in self.links:
-            if(t in types):
-                link = self.network.link_segs.lookup_end(id, 'start')
+        for (t, link) in self.links:
+            if(t in types and not isinstance(link, HwySeg)):
                 nodes.add(link.start)
 
         return nodes
+
+    def describe_link(self, trunk):
+        return self.get_hwys()[0]
 
 class LinkSeg(Seg):
     def __init__(self, el, node_pool):
@@ -303,7 +314,6 @@ class LinkSeg(Seg):
         link_type = trunk.get_link_type(self)
         dest = self.get_dest(trunk)
         if(link_type == 'exit'):
-            side = trunk.get_side(self)
             return '{}: {}'.format(self.get_number(), dest)
         else:
             return dest
@@ -439,7 +449,7 @@ class SegIndex:
 
                 seg_id = self.lookup(node_id, idx_type, partition)
                 if(seg_id):
-                    matches.append((link_type, seg_id))
+                    matches.append((link_type, self.get(seg_id)))
 
         return matches
 
