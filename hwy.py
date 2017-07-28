@@ -103,9 +103,6 @@ class Seg(OsmElm):
 
         self.name = self.get_tag('ref')
         self.type = self.get_tag('highway')
-        self.dest = self.get_tag('destination')
-        if(not self.dest):
-            self.dest = self.get_tag('destination:ref')
 
         self.add_lanes = 0
         self.remove_lanes = 0
@@ -232,19 +229,37 @@ class LinkSeg(Seg):
     def __init__(self, el, node_pool):
         super().__init__(el, node_pool)
 
+        self.dest = None
         self.dest_links = {}
 
-    def get_dest(self):
-        if self.dest:
-            return self.dest
-        if self.dest_links.values():
-            return '/'.join([l.get_tag('name', 'ref') for l in self.dest_links.values() if l.get_tag('name', 'ref')])
+    def get_junction(self, trunk):
+        link_type = trunk.get_link_type(self)
+        return self.start if (link_type == 'exit') else self.end
 
-        return '???'
+    def get_dest(self, trunk):
+        if not self.dest:
+            self.dest = self.node_pool[self.get_junction(trunk)].get_tag('exit_to')
+            if(self.dest):
+                return self.dest
+
+            self.dest = self.get_tag('destination')
+            if(self.dest):
+                return self.dest
+
+            self.dest = self.get_tag('destination:ref')
+            if(self.dest):
+                return self.dest
+
+            if self.dest_links.values():
+                return '/'.join([l.get_tag('name', 'ref') for l in self.dest_links.values() if l.get_tag('name', 'ref')])
+
+            self.dest = '???'
+
+        return self.dest
 
     def describe_link(self, trunk):
         link_type = trunk.get_link_type(self)
-        dest = self.get_dest()
+        dest = self.get_dest(trunk)
         if(link_type == 'exit'):
             side = trunk.get_side(self)
             return '{}: {}'.format(self.get_number(), dest)
