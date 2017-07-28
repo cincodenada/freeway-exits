@@ -43,7 +43,7 @@ for start in net.hwys.get_hwy(hwy).starts:
     while curseg:
         extra_lanes += curseg.add_lanes
         curlanes = curseg.lanes + extra_lanes
-        print("Lanes/links:", lastlanes, curlanes, len(curseg.links))
+        print("Lanes/links:", lastlanes, curlanes, len(curseg.links), file=sys.stderr)
         if(lastlanes != curlanes or len(curseg.links)):
             lane_diff = (curlanes - lastlanes)
 
@@ -59,18 +59,18 @@ for start in net.hwys.get_hwy(hwy).starts:
                     else:
                         link_sub = 0
 
-                    print(link.describe_link(curseg))
-                    print("Diff:", lane_diff, -link_sub, link_add)
+                    print(link.describe_link(curseg), file=sys.stderr)
+                    print("Diff:", lane_diff, -link_sub, link_add, file=sys.stderr)
                     # Add an extra row if we have lane changes
                     # that aren't accounted for by exits/entrances
                     if(idx == 0):
                         if(lane_diff < 0 and -lane_diff > link_sub):
-                            print("Adding buffer row...")
+                            print("Adding buffer row...", file=sys.stderr)
                             row = curhwy.add_row()
                             for n in range(curlanes):
                                 row.add_lane(render.Lane())
                         elif(lane_diff > 0 and lane_diff > link_add):
-                            print("Adding buffer row...")
+                            print("Adding buffer row...", file=sys.stderr)
                             row = curhwy.add_row()
                             for n in range(lastlanes):
                                 row.add_lane(render.Lane())
@@ -96,12 +96,12 @@ for start in net.hwys.get_hwy(hwy).starts:
                     lastlanes = curlanes
             else:
                 if(lane_diff < 0 and -lane_diff > link_sub):
-                    print("Adding buffer row...")
+                    print("Adding buffer row...", file=sys.stderr)
                     row = curhwy.add_row()
                     for n in range(curlanes):
                         row.add_lane(render.Lane())
                 elif(lane_diff > 0 and lane_diff > link_add):
-                    print("Adding buffer row...")
+                    print("Adding buffer row...", file=sys.stderr)
                     row = curhwy.add_row()
                     for n in range(lastlanes):
                         row.add_lane(render.Lane())
@@ -117,7 +117,7 @@ for start in net.hwys.get_hwy(hwy).starts:
 
 dwg.render('text')
 if(args.svg):
-    print("Rendering SVG...")
+    print("Rendering SVG...", file=sys.stderr)
     dwg.render()
-    print("Writing...")
+    print("Writing...", file=sys.stderr)
     dwg.save(args.svg)
