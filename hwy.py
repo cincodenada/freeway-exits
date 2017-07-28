@@ -2,15 +2,33 @@ import math
 import sys
 from collections import defaultdict
 
-class Node:
+class OsmElm:
+    def __init__(self, el):
+        self.el = el
+
+    def get_tag(self, *args):
+        for k in args:
+            tagel = self.el.find("./tag[@k='{}']".format(k))
+            # I'm not sure why this is necessary?
+            # Maybe it's not?
+            if(hasattr(tagel, 'get')):
+                return tagel.get('v')
+            elif(hasattr(tagel, 'attrib')):
+                return tagel.attrib.get('v')
+
+        return None
+
+class Node(OsmElm):
     def __init__(self, xmlobj):
+        super().__init__(xmlobj)
+
         self.id = int(xmlobj.get('id'))
         self.lat = float(xmlobj.get('lat'))
         self.lon = float(xmlobj.get('lon'))
         try:
-            nodetype = xmlobj.find("./tag[@k='highway']").get('v')
+            nodetype = self.get_tag('highway')
             if(nodetype == 'motorway_junction'):
-                self.name = xmlobj.find("./tag[@k='ref']").get('v')
+                self.name = self.get_tag('ref')
             else:
                 self.name = None
         except AttributeError:
@@ -54,7 +72,7 @@ class Network:
 
     def parse_aux_ways(self, osmTree):
         for way in osmTree.iter('way'):
-            newseg = HwySeg(way, None)
+            newseg = Seg(way, self)
             for n_id in newseg.nodes:
                 match_id = self.links.lookup(n_id, 'start')
                 if(match_id and match_id != newseg.id):
@@ -70,11 +88,11 @@ class Network:
             s.update_links(self.hwy_segs, self.links)
 
 
-class Seg:
+class Seg(OsmElm):
     lane_keys = ['turn','hov','hgv','bus','motor_vehicle','motorcycle']
 
     def __init__(self, el, node_pool):
-        self.el = el
+        super().__init__(el)
         self.node_pool = node_pool
 
         self.id = int(self.el.attrib.get('id'))
@@ -124,15 +142,6 @@ class Seg:
         self.next = myIndex.lookup_seg(self.end, 'start')
         self.prev = myIndex.lookup_seg(self.start, 'end')
 
-    def get_tag(self, *args):
-        for k in args:
-            tagel = self.el.find("./tag[@k='{}']".format(k))
-            # I'm not sure why this is necessary?
-            # Maybe it's not?
-            if(hasattr(tagel, 'get')):
-                return tagel.get('v')
-            elif(hasattr(tagel, 'attrib')):
-                return tagel.attrib.get('v')
 
         return None
 
