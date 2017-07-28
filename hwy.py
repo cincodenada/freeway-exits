@@ -262,7 +262,7 @@ class LinkSeg(Seg):
 
     def get_dest(self, trunk):
         if not self.dest:
-            self.dest = self.node_pool[self.get_junction(trunk)].get_tag('exit_to')
+            self.dest = self.node_pool[self.get_junction(trunk)].get_tag('exit_to', 'exit_to:left', 'exit_to:right')
             if(self.dest):
                 return self.dest
 
