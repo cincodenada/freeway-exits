@@ -39,7 +39,7 @@ class Network:
         self.xml = osmTree
         self.nodes = {}
         self.hwys = {}
-        self.links = SegIndex()
+        self.link_segs = SegIndex()
         self.hwy_segs = SegIndex(merge=True)
 
         self.parse_nodes()
@@ -68,24 +68,24 @@ class Network:
             if(seg_type == 'motorway'):
                 self.hwy_segs.add(HwySeg(way, self.nodes))
             elif(seg_type == 'motorway_link'):
-                self.links.add(LinkSeg(way, self.nodes))
+                self.link_segs.add(LinkSeg(way, self.nodes))
 
     def parse_aux_ways(self, osmTree):
         for way in osmTree.iter('way'):
             newseg = Seg(way, self)
             for n_id in newseg.nodes:
-                match_id = self.links.lookup(n_id, 'start')
+                match_id = self.link_segs.lookup(n_id, 'start')
                 if(match_id and match_id != newseg.id):
-                    end_link = self.links.lookup_end(match_id, 'end')
+                    end_link = self.link_segs.lookup_end(match_id, 'end')
                     print("Matched entrance link {} to segment {} from {} via node {}".format(newseg.id, end_link.id, match_id, n_id))
                     end_link.dest_links[newseg.id] = newseg
 
     def link_ways(self):
         for s in self.hwy_segs.segs.values():
-            s.update_links(self.hwy_segs, self.links)
+            s.update_links(self.hwy_segs, self.link_segs)
 
-        for s in self.links.segs.values():
-            s.update_links(self.hwy_segs, self.links)
+        for s in self.link_segs.segs.values():
+            s.update_links(self.hwy_segs, self.link_segs)
 
 
 class Seg(OsmElm):
@@ -278,7 +278,7 @@ class Hwy:
             while(curseg):
                 for (t, id) in curseg.links:
                     if(t == 'entrance'):
-                        link = self.parent.links.lookup_end(id, 'start')
+                        link = self.parent.link_segs.lookup_end(id, 'start')
                         print(link.start)
                 curseg = curseg.next
 

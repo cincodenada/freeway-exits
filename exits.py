@@ -40,7 +40,7 @@ for start in net.hwys.get_hwy('I 5').starts:
             if(len(curseg.links)):
                 for (idx, linkdata) in enumerate(curseg.links):
                     (type, link_id) = linkdata
-                    link = net.links.get(link_id)
+                    link = net.link_segs.get(link_id)
                     side = curseg.get_side(link)
 
                     # Exits apply to this row
