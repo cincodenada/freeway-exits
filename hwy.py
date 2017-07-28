@@ -66,9 +66,9 @@ class Network:
 
             seg_type = way.find("./tag[@k='highway']").get('v')
             if(seg_type == 'motorway'):
-                self.hwy_segs.add(HwySeg(way, self.nodes))
+                self.hwy_segs.add(HwySeg(way, self))
             elif(seg_type == 'motorway_link'):
-                self.link_segs.add(LinkSeg(way, self.nodes))
+                self.link_segs.add(LinkSeg(way, self))
 
     def parse_aux_ways(self, osmTree):
         for way in osmTree.iter('way'):
@@ -82,18 +82,19 @@ class Network:
 
     def link_ways(self):
         for s in self.hwy_segs.segs.values():
-            s.update_links(self.hwy_segs, self.link_segs)
+            s.post_process(self.hwy_segs, self.link_segs)
 
         for s in self.link_segs.segs.values():
-            s.update_links(self.hwy_segs, self.link_segs)
+            s.post_process(self.hwy_segs, self.link_segs)
 
 
 class Seg(OsmElm):
     lane_keys = ['turn','hov','hgv','bus','motor_vehicle','motorcycle']
 
-    def __init__(self, el, node_pool):
+    def __init__(self, el, network):
         super().__init__(el)
-        self.node_pool = node_pool
+        self.network = network
+        self.node_pool = network.nodes
 
         self.id = int(self.el.attrib.get('id'))
 
@@ -163,8 +164,8 @@ class Seg(OsmElm):
             return None
 
 class HwySeg(Seg):
-    def __init__(self, el, node_pool):
-        super().__init__(el, node_pool)
+    def __init__(self, el, network):
+        super().__init__(el, network)
 
         self.links = []
 
