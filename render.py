@@ -2,6 +2,7 @@ import svgwrite
 from svgwrite import mm
 from math import copysign
 import symbols as sym
+import re
 
 class Diagram:
     text_buffer = 5
@@ -158,6 +159,8 @@ class Row:
         self.idx = idx
         pos = (self.offset, self.idx)
 
+        text_bits = {}
+
         if(self.lane_diff):
             lj = LaneJoiner(self.lane_diff, 1)
             lj.set_row(self)
@@ -166,27 +169,22 @@ class Row:
             self.extras = []
 
         if(fmt == 'text'):
-            left_links = [l.render('text', None) for l in self.links if l.side == -1 and not isinstance(l, Label)]
-            left_extras = [e.render('text', None) for e in self.extras if e.side == -1]
-
-            num_left_things = len(left_links) + len(left_extras)
-            row = ' '*(self.dwg.text_buffer + self.offset - num_left_things)
-            row += ''.join(left_links) + ''.join(left_extras)
+            text_bits['left_links'] = [l.render('text', None) for l in self.links if l.side == -1 and not isinstance(l, Label)]
+            text_bits['left_extras'] = [e.render('text', None) for e in self.extras if e.side == -1]
         else:
             g = self.svg.g(id='row' + str(self.idx))
 
+        text_bits['lanes'] = ''
         for (i, l) in enumerate(self.lanes):
             lane = l.render(fmt, i)
             if(fmt == 'svg'):
                 g.add(lane)
             else:
-                row += lane
+                text_bits['lanes'] += lane
 
         if(fmt == 'text'):
-            right_links = [l.render('text', None) for l in self.links if l.side == 1 or isinstance(l, Label)]
-            right_extras = [e.render('text', None) for e in self.extras if e.side == 1]
-            row += ''.join(right_extras) + ''.join(right_links)
-            return row
+            text_bits['right_links'] = [l.render('text', None) for l in self.links if l.side == 1 and not isinstance(l, Label)]
+            text_bits['right_extras'] = [e.render('text', None) for e in self.extras if e.side == 1]
         else:
             counts = {-1: 0, 1: 0}
             for e in self.extras:
@@ -199,6 +197,19 @@ class Row:
                 counts[l.side] += 2
 
             return g
+
+        if fmt == 'text':
+            after = 'right' if self.hwy.flipped else 'left'
+            before = 'left' if self.hwy.flipped else 'right'
+            num_buffer_things = len(text_bits[before+'_links']) + len(text_bits[before+'_extras'])
+
+            row = ' '*(self.dwg.text_buffer + self.offset - num_buffer_things)
+            row += ''.join(text_bits[before+'_links']) + ''.join(text_bits[before+'_extras'])
+            row += text_bits['lanes']
+            row += ''.join(text_bits[after+'_extras']) + ''.join(text_bits[after+'_links'])
+            row += ''.join([l.render('text', None) for l in self.links if isinstance(l, Label)])
+            return row
+
 
     def add_lane(self, el):
         el.set_row(self)
@@ -328,7 +339,7 @@ class Label(Element):
         relpos = self.get_relpos()
 
         if(fmt == 'text'):
-            return ('->' if self.type=='exit' else '<-') + self.text
+            return ('->' if self.type=='exit' else '<-') + self.abbreviate(self.text)
 
         anchor = 'end' if(self.side == -1) else 'start'
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
@@ -342,6 +353,13 @@ class Label(Element):
             ),
             text_anchor=anchor
         )
+
+    def abbreviate(self, name):
+        numeric = re.match(r'(.*: )?((?:North|South|East|West)\w* )?(\d+\w+)( (?:Street|Avenue))?$', name)
+        if numeric:
+            return numeric.group(3)
+
+        return name
 
 class LaneJoiner(Link):
     def __init__(self, diff, side):
