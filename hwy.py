@@ -87,6 +87,12 @@ class Network:
         for s in self.link_segs.segs.values():
             s.post_process(self.hwy_segs, self.link_segs)
 
+    def dump_link_nodes(self, types):
+        nodes = set()
+        for curseg in self.hwy_segs.segs.values():
+            nodes.update(curseg.dump_link_nodes(types))
+
+        return nodes
 
 class Seg(OsmElm):
     lane_keys = ['turn','hov','hgv','bus','motor_vehicle','motorcycle']
@@ -246,6 +252,18 @@ class HwySeg(Seg):
             else:
                 return -1 if rel_ang > 0 else 1
 
+    def dump_link_nodes(self, types='all'):
+        if not isinstance(types, list):
+            types = ['entrance', 'exit'] if types == 'all' else [types]
+
+        nodes = set()
+        for (t, id) in self.links:
+            if(t in types):
+                link = self.network.link_segs.lookup_end(id, 'start')
+                nodes.add(link.start)
+
+        return nodes
+
 class LinkSeg(Seg):
     def __init__(self, el, node_pool):
         super().__init__(el, node_pool)
@@ -310,17 +328,6 @@ class Hwy:
     def lookup(self, seg_id, idx):
         return self.parent.segs.lookup(seg_id, idx, self.name)
 
-    def dump_entrance_nodes(self):
-        nodes = set()
-        for start in self.starts:
-            curseg = start
-            while(curseg):
-                for (t, id) in curseg.links:
-                    if(t == 'entrance'):
-                        link = self.parent.link_segs.lookup_end(id, 'start')
-                        print(link.start)
-                curseg = curseg.next()
-
 class HwySet:
     def __init__(self, segs):
         self.hwys = {}
@@ -340,10 +347,6 @@ class HwySet:
 
     def get_hwy(self, name):
         return self.hwys[name]
-
-    def dump_entrance_nodes(self):
-        for hwy in self.hwys.values():
-            hwy.dump_entrance_nodes()
 
 class SegIndex:
     no_seg = '_all_'

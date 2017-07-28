@@ -7,20 +7,29 @@ import argparse
 
 parser = argparse.ArgumentParser(description = "Build a visualization of highways from OSM data")
 parser.add_argument('--svg', help="SVG file to output to")
+parser.add_argument('--dump-nodes', action='store_true', help="Dump entrance/exit nodes for links")
+parser.add_argument('--dump-type', default='all', help="Which type of nodes to dump", choices=['exit','entrance','all'])
+parser.add_argument('--osm-file', default='motorway.osm', help="OSM file to ingest")
+parser.add_argument('--aux-file', default='entrance', help="Prefix to use for aux node files")
+parser.add_argument('--highway', default='I 5', help="Prefix to use for aux node files")
 args = parser.parse_args()
 
-tree = ET.parse('motorway.osm')
+tree = ET.parse(args.osm_file)
 net = Network(tree.getroot())
 
+if(args.dump_nodes):
+    for n in net.dump_link_nodes(args.dump_type):
+        print(n)
+    sys.exit(0)
 
 print("Getting entrance ways...", file=sys.stderr)
-for efile in glob("entrance_*.osm"):
-    print("Parsing {}...".format(efile))
+for efile in glob(args.aux_file + "_*.osm"):
+    print("Parsing {}...".format(efile), file=sys.stderr)
     tree = ET.parse(efile)
     net.parse_aux_ways(tree.getroot())
 
 dwg = render.Diagram(20)
-hwy = 'I 5'
+hwy = args.highway
 for start in net.hwys.get_hwy(hwy).starts:
     curhwy = dwg.add_hwy()
 
