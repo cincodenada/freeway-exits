@@ -136,6 +136,9 @@ class Seg:
 
         return None
 
+    # Calculate the absolute angle of this element
+    # In a direction (forward or rev) from a given pivot node
+    # Pivot node defaults to start/end for forward/rev
     def get_ang(self, rev, pivot_node = None):
         # Set pivot node depending on rev
         if not pivot_node:
@@ -172,6 +175,7 @@ class HwySeg(Seg):
             if link.start != self.end and link.end != self.start:
                 self.links.append(l)
 
+    # Get the angle of a link relative to this segment
     def get_rel_ang(self, link):
         link_type = self.get_link_type(link)
         if(link_type is None):
@@ -190,6 +194,8 @@ class HwySeg(Seg):
 
         return diff
 
+    # Link type depends inherently on what trunk it's with respect to
+    # One highway's exit can be another's entrance
     def get_link_type(self, link):
         if((link.start in self.nodes) and (link.start != self.end)):
             return 'exit'
@@ -200,6 +206,8 @@ class HwySeg(Seg):
             print(self.nodes)
             return None
 
+    # Determine left-hand vs right-hand exits
+    # Based on angle of exit wrt hwy
     def get_side(self, link):
         type = self.get_link_type(link)
         if(type is None):
@@ -210,12 +218,6 @@ class HwySeg(Seg):
                 return 1 if rel_ang > 0 else -1
             else:
                 return -1 if rel_ang > 0 else 1
-
-    def add_exit(self, link):
-        self.links.append(link)
-
-    def add_entrance(self, link):
-        self.links.append(link)
 
 class LinkSeg(Seg):
     def __init__(self, el, node_pool):
