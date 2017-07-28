@@ -117,6 +117,16 @@ class Seg(OsmElm):
             lanedata = self.get_tag(key + ':lanes')
             self.lanedata[key] = lanedata.split('|') if lanedata else None
 
+    def get_name(self):
+        name = self.get_tag('name', 'ref')
+        if name:
+            return name
+
+        if self.get_tag('highway') == 'service':
+            return 'Rest Area'
+
+        return None
+
     def get_hwys(self):
         if(self.name):
             return self.name.split(';')
@@ -265,7 +275,7 @@ class LinkSeg(Seg):
                 return self.dest
 
             if self.dest_links.values():
-                return '/'.join([l.get_tag('name', 'ref') for l in self.dest_links.values() if l.get_tag('name', 'ref')])
+                return '/'.join(set([l.get_name() for l in self.dest_links.values() if l.get_name()]))
 
             self.dest = '???'
 
