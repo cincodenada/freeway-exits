@@ -12,9 +12,21 @@ else
   chunk=$3
 fi
 
+mergefiles=""
 lines=`wc -l $nodes | cut -d\  -f1`
+numchunks=0
 for startline in `seq 1 $chunk $lines`; do
   outfile="${nodes}_${startline}.osm"
   echo "Extracting $chunk starting at $startline to $outfile..."
   ./osmfilter $infile --keep="`tail -n+$startline $nodes | head -n$chunk | perl -ne 'BEGIN { print "\@ndref"; } chomp; print "=$_ "'`" > $outfile
+  mergefiles="$mergefiles --rx $outfile"
+  numchunks=$(($numchunks+1))
 done
+
+if [ $numchunks -eq 1 ]; then
+    cp ${nodes}_1.osm ${nodes}.merged.osm
+else
+    mergecmd=$(for i in $(seq 2 $numchunks); do echo -n " --merge"; done)
+    echo "osmosis $mergefiles $mergecmd --wx ${nodes}_merged.osm"
+    osmosis $mergefiles $mergecmd --wx ${nodes}.merged.osm
+fi
