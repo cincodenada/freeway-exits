@@ -283,19 +283,17 @@ class Ramp(Link):
         self.number = number
         super().__init__(type)
 
-class Exit(Ramp):
-    chars = {
-        False: {-1:'╗',1:'╔'},
-        True: {-1:'╲',1:'╱'},
-    }
     def render(self, fmt, idx, is_cap = False):
         relpos = self.get_relpos()
         if(fmt == 'text'):
-            return self.chars[is_cap][self.get_flipside()]
+            if is_cap:
+                return self.cap_chars[self.get_flipside()]
+            else:
+                return self.ramp_chars[self.get_flip()][self.side]
 
         pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
 
-        nameparts = ['exit']
+        nameparts = [self.typestr]
         if(is_cap):
             nameparts.append('cap')
         if(self.row.hwy.flipped):
@@ -305,29 +303,22 @@ class Exit(Ramp):
             '_'.join(nameparts),
             relpos, pos
         )
+
+class Exit(Ramp):
+    ramp_chars = {
+        -1: {-1:'⤦',1:'⤥'}, # Southbound
+        1: {-1:'⤣',1:'⤤'}, # Northbound
+    }
+    cap_chars = {-1:'╲',1:'╱'}
+    typestr = 'exit'
 
 class Entrance(Ramp):
-    chars = {
-        False: {-1:'╔',1:'╗'},
-        True: {-1:'╱',1:'╲'},
+    ramp_chars = {
+        -1: {-1:'⇘',1:'⇙'}, # Southbound
+        1: {-1:'⇗',1:'⇖'}, # Northbound
     }
-    def render(self, fmt, idx, is_cap = False):
-        relpos = self.get_relpos()
-        if(fmt == 'text'):
-            return self.chars[is_cap][self.get_flipside()]
-
-        pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
-
-        nameparts = ['entrance']
-        if(is_cap):
-            nameparts.append('cap')
-        if(self.row.hwy.flipped):
-            nameparts.append('flip')
-        nameparts.append(self.sidename[self.side])
-        return self.get_symbol(
-            '_'.join(nameparts),
-            relpos, pos
-        )
+    cap_chars = {-1:'╱',1:'╲'}
+    typestr = 'entrance'
 
 class Label(Element):
     def __init__(self, side, type, text):
