@@ -306,7 +306,7 @@ class Ramp(Link):
 
 class Exit(Ramp):
     ramp_chars = {
-        -1: {-1:'⤦',1:'⤥'}, # Southbound
+        -1: {1:'⤦',-1:'⤥'}, # Southbound
         1: {-1:'⤣',1:'⤤'}, # Northbound
     }
     cap_chars = {-1:'╲',1:'╱'}
@@ -314,7 +314,7 @@ class Exit(Ramp):
 
 class Entrance(Ramp):
     ramp_chars = {
-        -1: {-1:'⇘',1:'⇙'}, # Southbound
+        -1: {1:'⇘',-1:'⇙'}, # Southbound
         1: {-1:'⇗',1:'⇖'}, # Northbound
     }
     cap_chars = {-1:'╱',1:'╲'}
