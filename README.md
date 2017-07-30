@@ -19,5 +19,5 @@ virtually identical to the original diagram. From there, I start taking it
 elsewhere and find more ways to break it.
 
 [orig]: https://www.reddit.com/r/SeattleWA/comments/5i5ww9/i_get_annoyed_when_i_cant_figure_out_what_lane_i/ "Original post, just southbound"
-[v2]: https://www.reddit.com/r/SeattleWA/comments/5i5ww9/i_get_annoyed_when_i_cant_figure_out_what_lane_i/ "Improved post, both directions"
+[v2]: https://www.reddit.com/r/SeattleWA/comments/5ipdkg/another_cool_diagram/ "Improved post, both directions"
 [osmc]: https://gitlab.com/osm-c-tools/osmctools "osmctools GitLab"
