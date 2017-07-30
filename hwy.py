@@ -244,8 +244,8 @@ class HwySeg(Seg):
         elif((link.end in self.nodes) and (link.end != self.start)):
             return 'entrance'
         else:
-            print(link.start, link.end)
-            print(self.nodes)
+            print(link.start, link.end, file=sys.stderr)
+            print(self.nodes, file=sys.stderr)
             return None
 
     # Determine left-hand vs right-hand exits
