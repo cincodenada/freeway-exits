@@ -76,7 +76,7 @@ class Network:
             for n_id in newseg.nodes:
                 match_id = self.link_segs.lookup(n_id, 'start')
                 if(match_id and match_id != newseg.id):
-                    end_link = self.link_segs.lookup_end(match_id, 'end')
+                    end_link = self.link_segs.lookup_last(match_id, 'end')
                     print("Matched entrance link {} to segment {} from {} via node {}".format(newseg.id, end_link.id, match_id, n_id), file=sys.stderr)
                     end_link.dest_links[newseg.id] = newseg
 
@@ -268,7 +268,9 @@ class HwySeg(Seg):
         nodes = set()
         for (t, link) in self.links:
             if(t in types and not isinstance(link, HwySeg)):
-                nodes.add(link.start)
+                towards = 'start' if t == 'entrance' else 'end'
+                last = self.network.link_segs.lookup_last(link.id, towards)
+                nodes.add(getattr(last, towards))
 
         return nodes
 
@@ -453,8 +455,8 @@ class SegIndex:
 
         return matches
 
-    def lookup_end(self, link_id, direction, maxloop = 100):
-        relattr = 'start' if direction == 'end' else 'end'
+    def lookup_last(self, link_id, towards, maxloop = 100):
+        relattr = 'end' if towards == 'end' else 'start'
         seen_ids = []
         while(link_id):
             if link_id in seen_ids:
@@ -464,8 +466,8 @@ class SegIndex:
             seen_ids.append(link_id)
 
             cur_link = self.get(link_id)
-            cur_node = getattr(cur_link, relattr)
-            print("Looking for {} of segment {} at {}...".format(direction, link_id, cur_node), file=sys.stderr)
-            link_id = self.lookup(getattr(cur_link, direction), relattr)
+            next_node = getattr(cur_link, relattr)
+            print("Looking for {} of segment {} at {}...".format(towards, link_id, next_node), file=sys.stderr)
+            link_id = self.lookup(next_node, 'end' if relattr == 'start' else 'start')
 
         return cur_link
