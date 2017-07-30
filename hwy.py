@@ -282,7 +282,8 @@ class LinkSeg(Seg):
         super().__init__(el, node_pool)
 
         self.dest = None
-        self.dest_links = {}
+        self.source = None
+        self.aux_links = {}
 
     def get_index(self):
         return self.network.link_segs
@@ -291,22 +292,36 @@ class LinkSeg(Seg):
         link_type = trunk.get_link_type(self)
         return self.start if (link_type == 'exit') else self.end
 
+    def get_aux(self):
+        if self.aux_links.values():
+            self.aux = '/'.join(set([l.get_name() for l in self.aux_links.values() if l.get_name()]))
+            return self.aux
+        else:
+            return None
+
+    def get_source(self, trunk):
+        if not self.source:
+            self.source = self.get_aux()
+            if(self.source):
+                return self.source
+
+            self.source = '???'
+
+        return self.source
+
     def get_dest(self, trunk):
         if not self.dest:
             self.dest = self.node_pool[self.get_junction(trunk)].get_tag('exit_to', 'exit_to:left', 'exit_to:right')
             if(self.dest):
                 return self.dest
 
-            self.dest = self.get_tag('destination')
+            self.dest = self.get_tag('destination:ref:to', 'destination:ref', 'destination')
             if(self.dest):
                 return self.dest
 
-            self.dest = self.get_tag('destination:ref')
+            self.dest = self.get_aux()
             if(self.dest):
                 return self.dest
-
-            if self.dest_links.values():
-                return '/'.join(set([l.get_name() for l in self.dest_links.values() if l.get_name()]))
 
             self.dest = '???'
 
@@ -314,11 +329,11 @@ class LinkSeg(Seg):
 
     def describe_link(self, trunk):
         link_type = trunk.get_link_type(self)
-        dest = self.get_dest(trunk)
+        desc = self.get_dest(trunk) if link_type == 'exit' else self.get_source(trunk)
         if(link_type == 'exit'):
-            return '{}: {}'.format(self.get_number(), dest)
+            return '{}: {}'.format(self.get_number(), desc)
         else:
-            return dest
+            return desc
 
     def get_number(self):
         return self.node_pool[self.start].name
