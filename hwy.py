@@ -74,11 +74,11 @@ class Network:
         for way in osmTree.iter('way'):
             newseg = Seg(way, self)
             for n_id in newseg.nodes:
-                match_id = self.link_segs.lookup(n_id, 'start')
-                if(match_id and match_id != newseg.id):
-                    end_link = self.link_segs.lookup_last(match_id, 'end')
-                    print("Matched entrance link {} to segment {} from {} via node {}".format(newseg.id, end_link.id, match_id, n_id), file=sys.stderr)
-                    end_link.dest_links[newseg.id] = newseg
+                for match_id in self.link_segs.lookup(n_id, 'start'):
+                    if(match_id and match_id != newseg.id):
+                        for end_link in self.link_segs.lookup_last(match_id, 'end'):
+                            print("Matched entrance link {} to segment {} from {} via node {}".format(newseg.id, end_link.id, match_id, n_id), file=sys.stderr)
+                            end_link.aux_links[newseg.id] = newseg
 
     def link_ways(self):
         for s in self.hwy_segs.segs.values():
@@ -209,13 +209,13 @@ class HwySeg(Seg):
                 self.links.append(l)
 
         # Find connecting highways
-        for l in hwyIndex.lookup_all(self.nodes):
-            link = l[1]
-            # On borders:
-            #  - exits get appended to next segment
-            #  - entrances get appended to previous segment
-            if link.start != self.end and link.end != self.start:
-                self.links.append(l)
+#       for l in hwyIndex.lookup_all(self.nodes):
+#           link = l[1]
+#           # On borders:
+#           #  - exits get appended to next segment
+#           #  - entrances get appended to previous segment
+#           if link.start != self.end and link.end != self.start:
+#               self.links.append(l)
 
     # Get the angle of a link relative to this segment
     def get_rel_ang(self, link):
@@ -268,9 +268,9 @@ class HwySeg(Seg):
         nodes = set()
         for (t, link) in self.links:
             if(t in types and not isinstance(link, HwySeg)):
-                towards = 'start' if t == 'entrance' else 'end'
-                last = self.network.link_segs.lookup_last(link.id, towards)
-                nodes.add(getattr(last, towards))
+                towards = ('start' if t == 'entrance' else 'end')
+                lasts = self.network.link_segs.lookup_last(link.id, towards)
+                nodes.update([getattr(last, towards) for last in lasts])
 
         return nodes
 
@@ -364,10 +364,12 @@ class SegIndex:
     no_seg = '_all_'
 
     def __init__(self, partition_by = None, merge = False):
+        self.merge = merge
         self.segs = {}
+        dict_type = dict if merge else lambda: defaultdict(set)
         self.indexes = {
-            'start': defaultdict(dict),
-            'end': defaultdict(dict),
+            'start': defaultdict(dict_type),
+            'end': defaultdict(dict_type),
         }
         self.partition_by = partition_by
         self.merge = merge
@@ -410,7 +412,11 @@ class SegIndex:
             except KeyError:
                 pass
 
-        cur_idx[key] = seg.id
+            cur_idx[key] = seg.id
+        else:
+            cur_idx[key].add(seg.id)
+
+
 
     # TODO: Do we need to worry about segments in the middle here?
     def merge_lanes(self, main, branch, merge_point):
@@ -431,7 +437,7 @@ class SegIndex:
         node_id = int(node_id)
         lookup = self.indexes[idx][partition]
 
-        if(node_id in lookup):
+        if(node_id in lookup or not self.merge):
             return lookup[node_id]
         else:
             return None
@@ -439,7 +445,10 @@ class SegIndex:
     def lookup_seg(self, node_id, idx, partition=None):
         res_id = self.lookup(node_id, idx, partition)
         if res_id:
-            return self.get(res_id)
+            if self.merge:
+                return self.get(res_id)
+            else:
+                return [self.get(i) for i in res_id]
         else:
             return None
 
@@ -449,25 +458,36 @@ class SegIndex:
             for idx_type in self.indexes.keys():
                 link_type = 'exit' if idx_type == 'start' else 'entrance'
 
-                seg_id = self.lookup(node_id, idx_type, partition)
-                if(seg_id):
-                    matches.append((link_type, self.get(seg_id)))
+                seg_ids = self.lookup(node_id, idx_type, partition)
+                if(seg_ids):
+                    if self.merge:
+                        seg_ids = [seg_ids]
+
+                    matches += [
+                        (link_type, self.get(s))
+                        for s in seg_ids
+                    ]
 
         return matches
 
-    def lookup_last(self, link_id, towards, maxloop = 100):
-        relattr = 'end' if towards == 'end' else 'start'
-        seen_ids = []
-        while(link_id):
-            if link_id in seen_ids:
-                print("I seem to have found a loop...", file=sys.stderr)
-                print(seen_ids, file=sys.stderr)
-                break
-            seen_ids.append(link_id)
+    def lookup_last(self, link_id, towards, seen_ids = []):
+        outlinks = set()
 
-            cur_link = self.get(link_id)
-            next_node = getattr(cur_link, relattr)
-            print("Looking for {} of segment {} at {}...".format(towards, link_id, next_node), file=sys.stderr)
-            link_id = self.lookup(next_node, 'end' if relattr == 'start' else 'start')
+        if link_id in seen_ids:
+            print("I seem to have found a loop...", file=sys.stderr)
+            print(seen_ids, file=sys.stderr)
+            return []
+        seen_ids.append(link_id)
 
-        return cur_link
+        cur_link = self.get(link_id)
+        next_node = getattr(cur_link, towards)
+        print("Looking for {} of segment {} at {}...".format(towards, link_id, next_node), file=sys.stderr)
+        next_links = self.lookup(next_node, 'end' if towards == 'start' else 'start')
+
+        if next_links:
+            for l in next_links:
+                outlinks.update(self.lookup_last(l, towards, seen_ids))
+        else:
+            return [cur_link]
+
+        return outlinks

@@ -26,6 +26,7 @@ for startline in `seq 1 $chunk $lines`; do
 done
 
 if [ $numchunks -eq 1 ]; then
+    echo "Copying only file to merged"
     cp ${nodes}_1.osm ${nodes}.merged.osm
 else
     mergecmd=$(for i in $(seq 2 $numchunks); do echo -n " --merge"; done)
