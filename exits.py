@@ -29,8 +29,9 @@ for efile in glob(args.aux_file + "_*.osm"):
     net.parse_aux_ways(tree.getroot())
 
 dwg = render.Diagram(20)
-hwy = args.highway
-for start in net.hwys.get_hwy(hwy).starts:
+hwy_name = args.highway
+hwy = net.hwys.get_hwy(hwy_name)
+for start in hwy.starts:
     curhwy = dwg.add_hwy()
 
     curseg = start
@@ -112,7 +113,7 @@ for start in net.hwys.get_hwy(hwy).starts:
         lastlanes = curlanes
         lastlinks = len(curseg.links)
         extra_lanes -= curseg.remove_lanes
-        curseg = curseg.next(hwy)
+        curseg = hwy.next(curseg)
 
 dwg.render('text')
 if(args.svg):

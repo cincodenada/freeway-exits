@@ -40,7 +40,7 @@ class Network:
         self.nodes = {}
         self.hwys = {}
         self.link_segs = SegIndex()
-        self.hwy_segs = SegIndex('get_hwys', merge=True)
+        self.hwy_segs = SegIndex('get_hwys')
 
         self.parse_nodes()
         self.parse_ways()
@@ -155,13 +155,13 @@ class Seg(OsmElm):
         if not hwy:
             hwy = self.get_hwys()[0]
 
-        return self.get_index().lookup_seg(self.end, 'start', hwy)
+        return self.get_index().lookup_segs(self.end, 'start', hwy)
 
     def prev(self, hwy = None):
         if not hwy:
             hwy = self.get_hwys()[0]
 
-        return self.get_index().lookup_seg(self.start, 'end', hwy)
+        return self.get_index().lookup_segs(self.start, 'end', hwy)
 
     def post_process(self, hwyIndex, linkIndex):
         pass
@@ -352,8 +352,39 @@ class Hwy:
         elif(seg.is_end(self.name)):
             self.ends.append(seg)
 
-    def lookup(self, seg_id, idx):
-        return self.parent.segs.lookup(seg_id, idx, self.name)
+    def lookup(self, node_id, idx_key):
+        idx = self.parent.seg_pool
+        segs = idx.lookup_segs(node_id, idx_key, self.name)
+
+        if not len(segs):
+            return None
+
+        # Merge segments as necessary
+        trunk = max(segs, key=lambda s: s.lanes)
+        for branch in segs:
+            if branch == trunk:
+                continue
+            trunk = self.merge_lanes(trunk, branch, idx_key)
+
+        return trunk
+
+    # TODO: Do we need to worry about segments in the middle here?
+    def merge_lanes(self, main, branch, merge_point):
+        branch.discard = True
+        if(merge_point == 'start'):
+            # Start of split lanes, add all previous lanes to our additional lanes
+            main.add_lanes = branch.lanes + branch.add_lanes
+        else:
+            # End of split, we're downsizing
+            main.remove_lanes = branch.lanes + branch.remove_lanes
+
+        return main
+
+    def next(self, relseg):
+        return self.lookup(relseg.end, 'start')
+
+    def prev(self, relseg):
+        return self.lookup(relseg.start, 'end')
 
 class HwySet:
     def __init__(self, segs):
@@ -378,16 +409,13 @@ class HwySet:
 class SegIndex:
     no_seg = '_all_'
 
-    def __init__(self, partition_by = None, merge = False):
-        self.merge = merge
+    def __init__(self, partition_by = None):
         self.segs = {}
-        dict_type = dict if merge else lambda: defaultdict(set)
         self.indexes = {
-            'start': defaultdict(dict_type),
-            'end': defaultdict(dict_type),
+            'start': defaultdict(lambda: defaultdict(set)),
+            'end': defaultdict(lambda: defaultdict(set)),
         }
         self.partition_by = partition_by
-        self.merge = merge
 
     def get(self, id):
         return self.segs[id]
@@ -414,36 +442,7 @@ class SegIndex:
             part_val = self.no_seg
 
         cur_idx = self.indexes[idx_key][part_val]
-
-        key = getattr(seg, idx_key)
-        if(self.merge):
-            try:
-                # Deal with merges/splits, widest gets priority
-                prevseg = self.get(cur_idx[key])
-                if(seg.lanes > prevseg.lanes):
-                    seg = self.merge_lanes(seg, prevseg, idx_key)
-                else:
-                    seg = self.merge_lanes(prevseg, seg, idx_key)
-            except KeyError:
-                pass
-
-            cur_idx[key] = seg.id
-        else:
-            cur_idx[key].add(seg.id)
-
-
-
-    # TODO: Do we need to worry about segments in the middle here?
-    def merge_lanes(self, main, branch, merge_point):
-        branch.discard = True
-        if(merge_point == 'start'):
-            # Start of split lanes, add all previous lanes to our additional lanes
-            main.add_lanes = branch.lanes + branch.add_lanes
-        else:
-            # End of split, we're downsizing
-            main.remove_lanes = branch.lanes + branch.remove_lanes
-
-        return main
+        cur_idx[getattr(seg, idx_key)].add(seg.id)
 
     def lookup(self, node_id, idx, partition=None):
         if not partition:
@@ -452,20 +451,11 @@ class SegIndex:
         node_id = int(node_id)
         lookup = self.indexes[idx][partition]
 
-        if(node_id in lookup or not self.merge):
-            return lookup[node_id]
-        else:
-            return None
+        return lookup[node_id]
 
-    def lookup_seg(self, node_id, idx, partition=None):
-        res_id = self.lookup(node_id, idx, partition)
-        if res_id:
-            if self.merge:
-                return self.get(res_id)
-            else:
-                return [self.get(i) for i in res_id]
-        else:
-            return None
+    def lookup_segs(self, node_id, idx, partition=None):
+        id_list = self.lookup(node_id, idx, partition)
+        return [self.get(i) for i in id_list]
 
     def lookup_all(self, node_ids, partition = None):
         matches = []
@@ -474,14 +464,10 @@ class SegIndex:
                 link_type = 'exit' if idx_type == 'start' else 'entrance'
 
                 seg_ids = self.lookup(node_id, idx_type, partition)
-                if(seg_ids):
-                    if self.merge:
-                        seg_ids = [seg_ids]
-
-                    matches += [
-                        (link_type, self.get(s))
-                        for s in seg_ids
-                    ]
+                matches += [
+                    (link_type, self.get(s))
+                    for s in seg_ids
+                ]
 
         return matches
 
@@ -499,7 +485,7 @@ class SegIndex:
         print("Looking for {} of segment {} at {}...".format(towards, link_id, next_node), file=sys.stderr)
         next_links = self.lookup(next_node, 'end' if towards == 'start' else 'start')
 
-        if next_links:
+        if len(next_links):
             for l in next_links:
                 outlinks.update(self.lookup_last(l, towards, seen_ids))
         else:
