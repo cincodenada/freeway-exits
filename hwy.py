@@ -471,6 +471,8 @@ class SegIndex:
 
         return matches
 
+    # TODO: This doesn't work if branches don't happen at the end
+    # Which definitely happens
     def lookup_last(self, link_id, towards, seen_ids = []):
         outlinks = set()
 
