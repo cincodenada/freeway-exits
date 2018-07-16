@@ -119,6 +119,9 @@ class Row:
         self.gs = dwg.gs
         self.hwy = hwy
 
+    def get_flip(self):
+        return 1 if self.hwy.flipped else -1
+
     def adjust_offset(self, next_row):
         if(next_row):
             # Is there a difference in lanes between this lane and next?
@@ -134,7 +137,7 @@ class Row:
                         self.caps.append(idx)
                         lane_diff-=1
                         # If it's a left-side lane, it'll eat up one col of offset
-                        if(l.side == -1):
+                        if(l.side != self.get_flip()):
                             lane_adj -= 1
             # ...and, in the next lane, for something that removes a lane
             for (idx, l) in enumerate(next_row.links):
@@ -143,7 +146,7 @@ class Row:
                         next_row.caps.append(idx)
                         lane_diff+=1
                         # Left-side removers will leave empty below them, adding a col of offset
-                        if(l.side == -1):
+                        if(l.side != self.get_flip()):
                             lane_adj += 1
 
             # If we still have a difference, note it so we can add a joiner
@@ -226,7 +229,7 @@ class Element:
         self.svg = row.svg
 
     def get_flip(self):
-        return 1 if self.row.hwy.flipped else -1
+        return self.row.get_flip()
 
     def get_flipside(self):
         return self.side * self.get_flip()
@@ -291,14 +294,14 @@ class Ramp(Link):
             else:
                 return self.ramp_chars[self.get_flip()][self.side]
 
-        pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
+        pos = -(idx+1) if self.get_flipside() == -1 else len(self.row.lanes) + idx
 
         nameparts = [self.typestr]
         if(is_cap):
             nameparts.append('cap')
         if(self.row.hwy.flipped):
             nameparts.append('flip')
-        nameparts.append(self.sidename[self.side])
+        nameparts.append(self.sidename[self.get_flipside()])
         return self.get_symbol(
             '_'.join(nameparts),
             relpos, pos
@@ -332,9 +335,9 @@ class Label(Element):
         if(fmt == 'text'):
             return ('->' if self.type=='exit' else '<-') + self.abbreviate(self.text)
 
-        anchor = 'end' if(self.side == -1) else 'start'
-        pos = -(idx+1) if self.side == -1 else len(self.row.lanes) + idx
-        our_pos = (pos+1) if(self.side == -1) else pos
+        anchor = 'end' if(self.side != self.get_flip()) else 'start'
+        pos = -(idx+1) if self.side != self.get_flip() else len(self.row.lanes) + idx
+        our_pos = (pos+1) if(self.side != self.get_flip()) else pos
 
         #TODO: Figure out a baseline to center this vertically as well
         return self.svg.text(self.text,
