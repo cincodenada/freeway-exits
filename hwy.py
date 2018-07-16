@@ -209,13 +209,13 @@ class HwySeg(Seg):
                 self.links.append(l)
 
         # Find connecting highways
-#       for l in hwyIndex.lookup_all(self.nodes):
-#           link = l[1]
-#           # On borders:
-#           #  - exits get appended to next segment
-#           #  - entrances get appended to previous segment
-#           if link.start != self.end and link.end != self.start:
-#               self.links.append(l)
+        for l in hwyIndex.lookup_all(self.nodes):
+            link = l[1]
+            # On borders:
+            #  - exits get appended to next segment
+            #  - entrances get appended to previous segment
+            if link.start != self.end and link.end != self.start:
+                self.links.append(l)
 
     # Get the angle of a link relative to this segment
     def get_rel_ang(self, link):
