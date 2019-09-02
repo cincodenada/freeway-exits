@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import xml.etree.ElementTree as ET
 from hwy import Network
 import render
@@ -11,8 +11,8 @@ parser.add_argument('--svg', help="SVG file to output to")
 parser.add_argument('--dump-nodes', action='store_true', help="Dump entrance/exit nodes for links")
 parser.add_argument('--dump-type', default='all', help="Which type of nodes to dump", choices=['exit','entrance','all'])
 parser.add_argument('--osm-file', default='motorway.osm', help="OSM file to ingest")
-parser.add_argument('--aux-file', default='entrance', help="Prefix to use for aux node files")
-parser.add_argument('--highway', default='I 5', help="Prefix to use for aux node files")
+parser.add_argument('--aux-file', default='link_nodes', help="Prefix to use for aux node files")
+parser.add_argument('--highway', default='I 5', help="OSM ref of highway to render")
 args = parser.parse_args()
 
 tree = ET.parse(args.osm_file)

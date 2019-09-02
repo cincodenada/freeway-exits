@@ -14,10 +14,71 @@ pull out the data I need, and dealt with countless inane combinations of entranc
 and exits, teasing details out of the OSM data that obviously isn't always
 organized nicely for this kind of minimalist diagramming.
 
-My end goal is to be able to generate a diagram of I-5 through Seattle that is
+My first goal is to be able to generate a diagram of I-5 through Seattle that is
 virtually identical to the original diagram. From there, I start taking it
 elsewhere and find more ways to break it.
+
+Current status is pretty dang messy - the basics are in place and it generates
+a diagram, but there are plenty of missing labels and some stub highways, and
+the SVG it generates is, uh, far from optimized. It's somewhere between
+proof-of-concept and MVP at this point.
+
+Usage
+-----
+
+This is not guaranteed to be up to date, but last time I updated it, this is
+how things worked. You'll need OSM data, some osm tools, and Python 3.
+ 
+To start, you need OSM data! If you have some laying around you can use that,
+otherwise there are various sites to get extracts, or you can download a chunk
+from JOSM or what have you. [GeoFabrik](https://download.geofabrik.de/) is an
+excellent source for extracts by geographic area.
+
+You'll also need [osmfilter](https://wiki.openstreetmap.org/wiki/Osmfilter),
+which the extract script is just a very light wrapper around. If your extract
+isn't in a format supported by `osmfilter` (namely, `.osm` or `.o5m`), you'll
+need to use `osmconvert` to get it into one of those formats.
+
+For instance, for my reference of I-5 through Seattle, I downloaded the
+GeoFabrik extract for [Washington State](waextract), and then converted it to
+the proper format with:
+
+```shell
+osmconvert washington-latest.osm.pbf --out-o5m > washington.o5m`
+```
+
+There are a few extracts needed, this is probably more complicated than it
+strictly needs to be and may be simplified eventually but for now, here's what
+i got. This also requires [osmosis](osmosis) for the last step.
+```shell
+# Optional: create and enter a Python venv
+python -m virtualenv -p python3 VENV
+source VENV/bin/activate
+# Install Python requirements (currently just svgwrite)
+pip install -r requirements.txt
+# Generate an SVG
+./extract.sh washington.o5m
+./exits.py --dump-nodes > link_nodes
+./entrance_nodes.sh washingon.o5m link_nodes
+./exits.py --svg out.svg
+```
+
+The middle two are somewhat optional (and will take a while), but they result
+in much fewer ???  entries on the ramps. What it does is uses the first extract
+to make a list of the dangling ends of entrance/exit ramps, and then uses those
+to extract any roads that connect to those ramps but aren't tagged as highways.
+These are then used to name the exits/entrances, because many ramps (especially
+entrances) don't have the titles in their metadata. I'm not actually sure the
+current code even uses these properly, but that's the intent.
+
+There are other options available, use `--help` for details. By default
+`exit.sh` will output a bunch of debug to STDERR and a textual representation to
+STDOUT, both mostly useful for debugging. To output an svg, specify a filename
+with the `--svg` argument. If you want to render a highway that is not I-5, use
+the `--highway` argument to specify an OSM ref name to use (defaults to `I 5`).
 
 [orig]: https://www.reddit.com/r/SeattleWA/comments/5i5ww9/i_get_annoyed_when_i_cant_figure_out_what_lane_i/ "Original post, just southbound"
 [v2]: https://www.reddit.com/r/SeattleWA/comments/5ipdkg/another_cool_diagram/ "Improved post, both directions"
 [osmc]: https://gitlab.com/osm-c-tools/osmctools "osmctools GitLab"
+[waextract]: https://download.geofabrik.de/north-america/us/washington.html
+[osmosis]: https://wiki.openstreetmap.org/wiki/Osmosis
