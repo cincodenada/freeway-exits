@@ -19,9 +19,10 @@ lines=`wc -l $nodes | cut -d\  -f1`
 numchunks=0
 for startline in `seq 1 $chunk $lines`; do
   outfile="${nodes}_${startline}.osm"
+  nodelist=$(tail -n+$startline $nodes | head -n$chunk | perl -ne 'BEGIN { print "\@ndref"; } chomp; print "=$_ "')
   echo "Extracting $chunk starting at $startline to $outfile..."
   $OSMFILTER $infile \
-    --keep="`tail -n+$startline $nodes | head -n$chunk | perl -ne 'BEGIN { print "\@ndref"; } chomp; print "=$_ "'`" \
+    --keep="$nodelist" \
     --drop="highway=motorway_link" > $outfile
   mergefiles="$mergefiles --rx $outfile"
   numchunks=$(($numchunks+1))

@@ -78,9 +78,9 @@ around this, there are a couple more scripts to extract the streets that
 entrances and exits come from and use them to fill in the missing labels.
 
 Extracting these requires a custom build of osmfilter (I haven't bothered trying
-to get my flag upstream yet), the `osmfilter` subrepo has the requisite version,
-and there's a symlink to where the `osmfilter` binary will be generated. You'll
-need to build the subrepo:
+to get my flag upstream yet). The `osmfilter` subrepo has the requisite version
+from my fork, and there's a symlink to where the `osmfilter` binary will be
+generated. You'll need to build the subrepo:
 
 ```shell
 cd osmctools
@@ -97,6 +97,10 @@ cd ..
 ./entrance_nodes.sh washingon.o5m link_nodes
 ./exits.py --aux-prefix link_nodes --svg out.svg
 ```
+
+The extract doesn't work super great yet for some reason, in my test it adds a
+grand total of two exit labels (wah-wah). But in theory, it should allow for
+filling in a lot of the blanks once it's working as intended.
 
 [orig]: https://www.reddit.com/r/SeattleWA/comments/5i5ww9/i_get_annoyed_when_i_cant_figure_out_what_lane_i/ "Original post, just southbound"
 [v2]: https://www.reddit.com/r/SeattleWA/comments/5ipdkg/another_cool_diagram/ "Improved post, both directions"
