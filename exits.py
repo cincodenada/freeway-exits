@@ -11,7 +11,7 @@ parser.add_argument('--svg', help="SVG file to output to")
 parser.add_argument('--dump-nodes', action='store_true', help="Dump entrance/exit nodes for links")
 parser.add_argument('--dump-type', default='all', help="Which type of nodes to dump", choices=['exit','entrance','all'])
 parser.add_argument('--osm-file', default='motorway.osm', help="OSM file to ingest")
-parser.add_argument('--aux-file', default='link_nodes', help="Prefix to use for aux node files")
+parser.add_argument('--aux-prefix', default='link_nodes', help="Prefix to use for aux node files")
 parser.add_argument('--highway', default='I 5', help="OSM ref of highway to render")
 args = parser.parse_args()
 
@@ -24,7 +24,7 @@ if(args.dump_nodes):
     sys.exit(0)
 
 print("Getting entrance ways...", file=sys.stderr)
-for efile in glob(args.aux_file + "_*.osm"):
+for efile in glob(args.aux_prefix + "_*.osm"):
     print("Parsing {}...".format(efile), file=sys.stderr)
     tree = ET.parse(efile)
     net.parse_aux_ways(tree.getroot())

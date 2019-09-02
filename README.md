@@ -58,24 +58,45 @@ source VENV/bin/activate
 pip install -r requirements.txt
 # Generate an SVG
 ./extract.sh washington.o5m
-./exits.py --dump-nodes > link_nodes
-./entrance_nodes.sh washingon.o5m link_nodes
 ./exits.py --svg out.svg
 ```
 
-The middle two are somewhat optional (and will take a while), but they result
-in much fewer ???  entries on the ramps. What it does is uses the first extract
-to make a list of the dangling ends of entrance/exit ramps, and then uses those
-to extract any roads that connect to those ramps but aren't tagged as highways.
-These are then used to name the exits/entrances, because many ramps (especially
-entrances) don't have the titles in their metadata. I'm not actually sure the
-current code even uses these properly, but that's the intent.
+And you'll get an SVG with a diagram out, if all goes well!
 
 There are other options available, use `--help` for details. By default
 `exit.sh` will output a bunch of debug to STDERR and a textual representation to
 STDOUT, both mostly useful for debugging. To output an svg, specify a filename
 with the `--svg` argument. If you want to render a highway that is not I-5, use
 the `--highway` argument to specify an OSM ref name to use (defaults to `I 5`).
+
+Auxillary Nodes
+---------------
+
+The above will result in a diagram with a lot of missing labels for entrance
+ramps, because entrances don't usually have metadata attached to them. To work
+around this, there are a couple more scripts to extract the streets that
+entrances and exits come from and use them to fill in the missing labels.
+
+Extracting these requires a custom build of osmfilter (I haven't bothered trying
+to get my flag upstream yet), the `osmfilter` subrepo has the requisite version,
+and there's a symlink to where the `osmfilter` binary will be generated. You'll
+need to build the subrepo:
+
+```shell
+cd osmctools
+autoreconf --install
+./configure
+make
+```
+
+Then cd back into the root, run the extracts, and then re-run the main script:
+
+```shell
+cd ..
+./exits.py --dump-nodes > link_nodes
+./entrance_nodes.sh washingon.o5m link_nodes
+./exits.py --aux-prefix link_nodes --svg out.svg
+```
 
 [orig]: https://www.reddit.com/r/SeattleWA/comments/5i5ww9/i_get_annoyed_when_i_cant_figure_out_what_lane_i/ "Original post, just southbound"
 [v2]: https://www.reddit.com/r/SeattleWA/comments/5ipdkg/another_cool_diagram/ "Improved post, both directions"

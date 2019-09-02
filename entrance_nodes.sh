@@ -1,5 +1,5 @@
 #!/bin/bash -x
-OSMFILTER=osmfilter
+OSMFILTER=./osmfilter
 if [ -z $1 ] || [ -z $2 ]; then
     echo "Usage:"
     echo "./entrance_nodes.sh <input.osm> <nodelist> [chunk_size]"
