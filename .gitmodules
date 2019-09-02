@@ -1,0 +1,3 @@
+[submodule "osmctools"]
+	path = osmctools
+	url = https://gitlab.com/cincodenada/osmctools.git
