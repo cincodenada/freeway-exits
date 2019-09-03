@@ -142,9 +142,9 @@ This extract takes a while (the extract for Washington State took several
 minutes on my Core i7), because my patches aren't terribly optimized.  I've
 deemed it not worth the effort to dig more into `osmfilter.c` to make them so,
 because I'd rather just set it running and wait it out. If [osmosis](osmosis) is
-installed it will merge all the auxiliary nodes into a single osm file for
-checking over in JOSM, etc, but the merged file is not used by the script
-itself.
+available it will merge all the auxiliary nodes into a single osm file for
+checking over manually in JOSM, etc, but the merged file is not used by the
+script itself.
 
 ## Contact
 
