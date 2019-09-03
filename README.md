@@ -2,16 +2,16 @@
 ==================
 By Joel Bradshaw
 
-A long while ago, a user who has sadly since deleted their account created 
-some really neat [simplified][orig] [diagrams][v2] of I-5 through Seattle 
-and posted them to /r/SeattleWA.
+Way back in December of 2016, a user who has sadly since deleted their account
+created some really neat [simplified][orig] [diagrams][v2] of I-5 through
+Seattle and posted them to /r/SeattleWA.
 
 As a big fan of bending data to my will, I looked at the diagram and thought,
 *you know, I bet I could generate that from OpenStreetMap data*.
 
-Many weekends and countless hours later, I've made some progress, but have much
+Many weekends and countless hours later I've made some progress, but have much
 yet to improve. I've had to hack additional filters into [`osmfilter`][osmc] to
-pull out the data I need, and dealt with countless inane combinations of entrances
+pull out the data I need, and dealt with countless combinations of entrances
 and exits, teasing details out of the OSM data that obviously isn't always
 organized nicely for this kind of minimalist diagramming.
 
