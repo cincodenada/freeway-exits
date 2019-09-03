@@ -146,13 +146,17 @@ available it will merge all the auxiliary nodes into a single osm file for
 checking over manually in JOSM, etc, but the merged file is not used by the
 script itself.
 
-## Contact
+## Contact/Credits
 
-The best way to ping me is on [Mastodon](https://cybre.space/@cincodenada) or
+I made this thing, and the best way to ping me is on
+[Mastodon](https://cybre.space/@cincodenada) or
 [Twitter](https://twitter.com/cincodenada)
 
-This README was organized with the help of Daniel Beck's excellent
-[README checklist](https://github.com/ddbeck/readme-checklist)
+This would not exist without the amazing [OpenStreetMap](osm) project, one of my
+favorite things the internet has done.
+
+Thanks to Daniel Beck for the excellent [README checklist](ddbeck) that was used
+to make this README a little more, well, readable.
 
 ## Big Ol' Example Image
 
@@ -160,8 +164,10 @@ This README was organized with the help of Daniel Beck's excellent
 
 [orig]: https://www.reddit.com/r/SeattleWA/comments/5i5ww9/i_get_annoyed_when_i_cant_figure_out_what_lane_i/ "Original post, just southbound"
 [v2]: https://www.reddit.com/r/SeattleWA/comments/5ipdkg/another_cool_diagram/ "Improved post, both directions"
+[osm]: https://www.openstreetmap.org/
 [osmc]: https://gitlab.com/osm-c-tools/osmctools "osmctools GitLab"
 [waextract]: https://download.geofabrik.de/north-america/us/washington.html
 [osmosis]: https://wiki.openstreetmap.org/wiki/Osmosis
 [ccbysa4]: https://creativecommons.org/licenses/by-sa/4.0/
 [osmcopy]: https://www.openstreetmap.org/copyright
+[ddbeck]: https://github.com/ddbeck/readme-checklist
