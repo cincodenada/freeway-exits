@@ -1,5 +1,6 @@
-Highway Diagrammer
+[Highway Diagrammer](https://github.com/cincodenada/freeway-exits/)
 ==================
+By Joel Bradshaw
 
 A long while ago, a user who has sadly since deleted their account created 
 some really neat [simplified][orig] [diagrams][v2] of I-5 through Seattle 
@@ -34,16 +35,43 @@ Generated | Original
 
 I also repeated my version full-size down at the bottom.
 
+License
+-------
+This project is licensed under [CC-BY-SA 4.0](ccbysa4)
+
+You are free to:
+ - Share — copy and redistribute the material in any medium or format
+ - Adapt — remix, transform, and build upon the material for any purpose, even
+   commercially. 
+
+Under the following terms:
+ - Attribution — You must give appropriate credit, provide a link to the
+   license, and indicate if changes were made. You may do so in any reasonable
+manner, but not in any way that suggests the licensor endorses you or your use.
+ - ShareAlike — If you remix, transform, or build upon the material, you must
+   distribute your contributions under the same license as the original.
+ - No additional restrictions — You may not apply legal terms or technological
+   measures that legally restrict others from doing anything the license
+permits.
+ 
+OSM data used to generate the images included is licensed under the
+[Open Data Commons Open Database License](osmcopy).
+
 Usage
 -----
 
 This is not guaranteed to be up to date, but last time I updated it, this is
-how things worked. You'll need OSM data, some osm tools, and Python 3.
+how things worked.
+
+You'll need:
+ - OSM tools (`osmfilter`, maybe `osmconvert`)
+ - Python 3
+ - Some OSM data of your choice to extract freeways from
  
-To start, you need OSM data! If you have some laying around you can use that,
-otherwise there are various sites to get extracts, or you can download a chunk
-from JOSM or what have you. [GeoFabrik](https://download.geofabrik.de/) is an
-excellent source for extracts by geographic area.
+If you have some OSM data laying around you can use that! Otherwise there are
+various sites to get extracts, or you can download a chunk from JOSM or what
+have you. [GeoFabrik](https://download.geofabrik.de/) is an excellent source for
+extracts by geographic area.
 
 You'll also need [osmfilter](https://wiki.openstreetmap.org/wiki/Osmfilter),
 which the extract script is just a very light wrapper around. If your extract
@@ -60,28 +88,29 @@ osmconvert washington-latest.osm.pbf --out-o5m > washington.o5m`
 
 There are a few extracts needed, this is probably more complicated than it
 strictly needs to be and may be simplified eventually but for now, here's what
-i got. This also requires [osmosis](osmosis) for the last step.
+I got.
+
 ```shell
-# Optional: create and enter a Python venv
+# Optional: create and activate a Python venv
 python -m virtualenv -p python3 VENV
 source VENV/bin/activate
+
 # Install Python requirements (currently just svgwrite)
 pip install -r requirements.txt
 # Generate an SVG
 ./extract.sh washington.o5m
-./exits.py --svg out.svg
+./exits.py --svg out.svg --highway "I 5"
 ```
 
 And you'll get an (very large, probably inefficient) SVG with a diagram out, if
-all goes well!
+all goes well! It will probably be missing a lot of entrance labels - see the
+next section for ways to mitigate that.
 
-There are other options available, use `--help` for details. By default
-`exit.sh` will output a bunch of debug to STDERR and a textual representation to
-STDOUT, both mostly useful for debugging. To output an svg, specify a filename
-with the `--svg` argument. If you want to render a highway that is not I-5, use
-the `--highway` argument to specify an OSM ref name to use (defaults to `I 5`).
+See `--help` for other options available. By default `exit.sh` will output a
+bunch of debug to STDERR and a textual representation to STDOUT, both mostly
+useful for debugging.
 
-Auxillary Nodes
+Auxiliary Nodes
 ---------------
 
 The above will result in a diagram with a lot of missing labels for entrance
@@ -113,7 +142,19 @@ cd ..
 This extract takes a while (the extract for Washington State took several
 minutes on my Core i7), because my patches aren't terribly optimized.  I've
 deemed it not worth the effort to dig more into `osmfilter.c` to make them so,
-because I'd rather just set it running and wait it out.
+because I'd rather just set it running and wait it out. If [osmosis](osmosis) is
+installed it will merge all the auxiliary nodes into a single osm file for
+checking over in JOSM, etc, but the merged file is not used by the script
+itself.
+
+Contact
+-------
+
+The best way to ping me is on [Mastodon](https://cybre.space/@cincodenada) or
+[Twitter](https://twitter.com/cincodenada)
+
+Big Ol' Example Image
+---------------------
 
 ![Generated diagram of Seattle freeways](seattle.png)
 
@@ -122,3 +163,5 @@ because I'd rather just set it running and wait it out.
 [osmc]: https://gitlab.com/osm-c-tools/osmctools "osmctools GitLab"
 [waextract]: https://download.geofabrik.de/north-america/us/washington.html
 [osmosis]: https://wiki.openstreetmap.org/wiki/Osmosis
+[ccbysa4]: https://creativecommons.org/licenses/by-sa/4.0/
+[osmcopy]: https://www.openstreetmap.org/copyright
