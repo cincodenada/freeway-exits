@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 OSMFILTER=./osmfilter
 if [ -z $1 ] || [ -z $2 ]; then
     echo "Usage:"
@@ -28,11 +28,15 @@ for startline in `seq 1 $chunk $lines`; do
   numchunks=$(($numchunks+1))
 done
 
-if [ $numchunks -eq 1 ]; then
-    echo "Copying only file to merged"
-    cp ${nodes}_1.osm ${nodes}.merged.osm
+if which osmosis > /dev/null; then
+  if [ $numchunks -eq 1 ]; then
+      echo "Copying only file to merged"
+      cp ${nodes}_1.osm ${nodes}.merged.osm
+  else
+      mergecmd=$(for i in $(seq 2 $numchunks); do echo -n " --merge"; done)
+      echo "osmosis $mergefiles $mergecmd --wx ${nodes}_merged.osm"
+      osmosis $mergefiles $mergecmd --wx ${nodes}.merged.osm
+  fi
 else
-    mergecmd=$(for i in $(seq 2 $numchunks); do echo -n " --merge"; done)
-    echo "osmosis $mergefiles $mergecmd --wx ${nodes}_merged.osm"
-    osmosis $mergefiles $mergecmd --wx ${nodes}.merged.osm
+  echo "Skipping merge, osmosis not present"
 fi
