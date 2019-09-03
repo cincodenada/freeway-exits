@@ -98,9 +98,10 @@ cd ..
 ./exits.py --aux-prefix link_nodes --svg out.svg
 ```
 
-The extract doesn't work super great yet for some reason, in my test it adds a
-grand total of two exit labels (wah-wah). But in theory, it should allow for
-filling in a lot of the blanks once it's working as intended.
+This extract takes a while (the extract for Washington State took several
+minutes on my Core i7), because my patches aren't terribly optimized.  I've
+deemed it not worth the effort to dig more into `osmfilter.c` to make them so,
+because I'd rather just set it running and wait it out.
 
 [orig]: https://www.reddit.com/r/SeattleWA/comments/5i5ww9/i_get_annoyed_when_i_cant_figure_out_what_lane_i/ "Original post, just southbound"
 [v2]: https://www.reddit.com/r/SeattleWA/comments/5ipdkg/another_cool_diagram/ "Improved post, both directions"
