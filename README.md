@@ -1,5 +1,4 @@
-[Highway Diagrammer](https://github.com/cincodenada/freeway-exits/)
-==================
+# [Highway Diagrammer](https://github.com/cincodenada/freeway-exits/)
 By Joel Bradshaw
 
 Way back in December of 2016, a user who has sadly since deleted their account
@@ -35,8 +34,7 @@ Generated | Original
 
 I also repeated my version full-size down at the bottom.
 
-License
--------
+## License
 This project is licensed under [CC-BY-SA 4.0](ccbysa4)
 
 You are free to:
@@ -57,8 +55,7 @@ permits.
 OSM data used to generate the images included is licensed under the
 [Open Data Commons Open Database License](osmcopy).
 
-Usage
------
+## Usage
 
 This is not guaranteed to be up to date, but last time I updated it, this is
 how things worked.
@@ -110,8 +107,7 @@ See `--help` for other options available. By default `exit.sh` will output a
 bunch of debug to STDERR and a textual representation to STDOUT, both mostly
 useful for debugging.
 
-Auxiliary Nodes
----------------
+### Auxiliary Nodes
 
 The above will result in a diagram with a lot of missing labels for entrance
 ramps, because entrances don't usually have metadata attached to them. To work
@@ -147,14 +143,12 @@ installed it will merge all the auxiliary nodes into a single osm file for
 checking over in JOSM, etc, but the merged file is not used by the script
 itself.
 
-Contact
--------
+## Contact
 
 The best way to ping me is on [Mastodon](https://cybre.space/@cincodenada) or
 [Twitter](https://twitter.com/cincodenada)
 
-Big Ol' Example Image
----------------------
+## Big Ol' Example Image
 
 ![Generated diagram of Seattle freeways](seattle.png)
 
