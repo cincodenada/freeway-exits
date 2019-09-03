@@ -151,6 +151,9 @@ script itself.
 The best way to ping me is on [Mastodon](https://cybre.space/@cincodenada) or
 [Twitter](https://twitter.com/cincodenada)
 
+This README was organized with the help of Daniel Beck's excellent
+[README checklist](https://github.com/ddbeck/readme-checklist)
+
 ## Big Ol' Example Image
 
 ![Generated diagram of Seattle freeways](seattle.png)
