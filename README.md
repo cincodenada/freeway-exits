@@ -32,6 +32,8 @@ Generated | Original
 -|-
 ![Generated diagram of Seattle freeways](seattle.png) |![Original diagram of Seattle freeways](inspiration.png)
 
+I also repeated my version full-size down at the bottom.
+
 Usage
 -----
 
@@ -112,6 +114,8 @@ This extract takes a while (the extract for Washington State took several
 minutes on my Core i7), because my patches aren't terribly optimized.  I've
 deemed it not worth the effort to dig more into `osmfilter.c` to make them so,
 because I'd rather just set it running and wait it out.
+
+![Generated diagram of Seattle freeways](seattle.png)
 
 [orig]: https://www.reddit.com/r/SeattleWA/comments/5i5ww9/i_get_annoyed_when_i_cant_figure_out_what_lane_i/ "Original post, just southbound"
 [v2]: https://www.reddit.com/r/SeattleWA/comments/5ipdkg/another_cool_diagram/ "Improved post, both directions"
