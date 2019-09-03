@@ -23,15 +23,14 @@ a diagram, but there are plenty of missing labels and some stub highways, and
 the SVG it generates is, uh, far from optimized. It's somewhere between
 proof-of-concept and MVP at this point.
 
-But, as of this writing, here's what it generates for the Seattle area, similar
-to what the original diagrams featured. The only editing I did here is to chop
-out the relevant sections of freeway and space them out sensibly:
+But, as of this writing, here's what it generates for the Seattle area, compared
+to the original diagram that I'm aiming for, more or less. The only editing I
+did here is to chop out the relevant sections of freeway and space them out
+sensibly:
 
-[[seattle.png]]
-
-For comparison, the reference image I'm aiming for, more or less:
-
-[[inspiration.png]]
+Generated | Original
+-|-
+![Generated diagram of Seattle freeways](seattle.png) |![Original diagram of Seattle freeways](inspiration.png)
 
 Usage
 -----
