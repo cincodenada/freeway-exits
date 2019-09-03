@@ -11,8 +11,8 @@ class Diagram:
         self.gs = gridsize
         self.svg = svgwrite.Drawing(debug=True)
         self.hwys = []
-        self.cur_horiz = 0
         self.hwy_offset = int(self.hwy_spacing/gridsize)
+        self.cur_horiz = self.hwy_offset
 
         self.add_sym("exit_R", sym.Ramp(self.svg, False, False, cap_color='green'))
         self.add_sym("entrance_R", sym.Ramp(self.svg, False, True, cap_color='red'))
@@ -55,7 +55,9 @@ class Diagram:
         return hwy
 
     def render(self, fmt = 'svg'):
+        self.max_height = 0
         for hwy in self.hwys:
+            self.max_height = max(self.max_height, len(hwy.rows))
             # Determine direction
             exit_nums = []
             for r in hwy.rows:
@@ -77,7 +79,9 @@ class Diagram:
                 print('='*(self.hwy_offset+self.text_buffer))
 
     def save(self, filename):
-        return self.svg.saveas(filename)
+        self.svg['width'] = self.cur_horiz*self.gs
+        self.svg['height'] = self.max_height*self.gs
+        return self.svg.saveas(filename, pretty=True)
 
 class Highway:
     def __init__(self, diagram):
