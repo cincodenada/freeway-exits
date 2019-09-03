@@ -116,8 +116,10 @@ entrances and exits come from and use them to fill in the missing labels.
 
 Extracting these requires a custom build of osmfilter (I haven't bothered trying
 to get my flag upstream yet). The `osmfilter` subrepo has the requisite version
-from my fork, and there's a symlink to where the `osmfilter` binary will be
-generated. You'll need to build the subrepo:
+from my fork. For convenience, there's a symlink to where the `osmfilter` binary
+will be generated, so you can build the subrepo in place and then just use it.
+
+To build, follow the directions in its readme, but this should suffice:
 
 ```shell
 cd osmctools
@@ -126,13 +128,14 @@ autoreconf --install
 make
 ```
 
-Then cd back into the root, run the extracts, and then re-run the main script:
+Then cd back into the root, run the auxiliary extracts, and then re-run the main
+script:
 
 ```shell
 cd ..
 ./exits.py --dump-nodes > link_nodes
 ./entrance_nodes.sh washingon.o5m link_nodes
-./exits.py --aux-prefix link_nodes --svg out.svg
+./exits.py --aux-prefix link_nodes --svg out.svg --highway "I 5"
 ```
 
 This extract takes a while (the extract for Washington State took several
